@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Sliders, Check, Flame, Dumbbell } from 'lucide-react';
+import { X, Sliders, Check, Flame, Dumbbell, AlertCircle } from 'lucide-react';
 
 interface TargetSettingsModalProps {
   isOpen: boolean;
@@ -42,40 +42,44 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-md glass-panel rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+      <div className="w-full max-w-md bg-white rounded-[28px] p-6 sm:p-7 border border-[#E8E2D2] shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition-colors"
+          className="absolute top-5 right-5 p-1.5 rounded-full text-[#7A7363] hover:text-[#1E1E24] hover:bg-[#FAF7F0] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center space-x-2.5 mb-4">
-          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Sliders className="w-4 h-4" />
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2.5 rounded-2xl bg-[#FFAEBF] text-[#1E1E24] shadow-sm">
+            <Sliders className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Adjust Daily Targets</h3>
-            <p className="text-xs text-slate-400">Override your AI Mifflin-St Jeor daily goals</p>
+            <h3 className="text-base font-extrabold text-[#1E1E24] tracking-tight">Adjust Daily Targets</h3>
+            <p className="text-xs text-[#7A7363]">Customize your daily nutrition targets</p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-            {error}
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1.5">
-              <span className="flex items-center space-x-1.5">
-                <Flame className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Daily Calorie Target (kcal)</span>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Daily Calories Target Slider */}
+          <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E2DBD0] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 text-xs font-bold text-[#1E1E24]">
+                <Flame className="w-4 h-4 text-[#C24161]" />
+                <span>Daily Calorie Target</span>
               </span>
-              <span className="text-emerald-400 font-bold">{calories} kcal</span>
-            </label>
+              <span className="bg-[#FDE382] text-[#2E2713] font-black px-2.5 py-0.5 rounded-full text-xs shadow-sm">
+                {calories} kcal
+              </span>
+            </div>
             <input
               type="range"
               min="1000"
@@ -83,23 +87,26 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen
               step="50"
               value={calories}
               onChange={(e) => setCalories(parseInt(e.target.value) || 2000)}
-              className="w-full accent-emerald-500 bg-dark-700 cursor-pointer"
+              className="w-full accent-[#1E1E24] cursor-pointer h-2 bg-[#E6DFD2] rounded-lg"
             />
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>1000 kcal</span>
-              <span>2500 kcal</span>
-              <span>4500 kcal</span>
+            <div className="flex justify-between text-[10px] font-semibold text-[#7A7363]">
+              <span>1,000 kcal</span>
+              <span>2,500 kcal</span>
+              <span>4,500 kcal</span>
             </div>
           </div>
 
-          <div>
-            <label className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1.5">
-              <span className="flex items-center space-x-1.5">
-                <Dumbbell className="w-3.5 h-3.5 text-blue-400" />
-                <span>Daily Protein Target (grams)</span>
+          {/* Daily Protein Target Slider */}
+          <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-[#E2DBD0] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 text-xs font-bold text-[#1E1E24]">
+                <Dumbbell className="w-4 h-4 text-[#1E3B68]" />
+                <span>Daily Protein Target</span>
               </span>
-              <span className="text-blue-400 font-bold">{protein}g</span>
-            </label>
+              <span className="bg-[#FFC4D2] text-[#421722] font-black px-2.5 py-0.5 rounded-full text-xs shadow-sm">
+                {protein}g
+              </span>
+            </div>
             <input
               type="range"
               min="40"
@@ -107,27 +114,27 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen
               step="5"
               value={protein}
               onChange={(e) => setProtein(parseInt(e.target.value) || 120)}
-              className="w-full accent-blue-500 bg-dark-700 cursor-pointer"
+              className="w-full accent-[#1E1E24] cursor-pointer h-2 bg-[#E6DFD2] rounded-lg"
             />
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+            <div className="flex justify-between text-[10px] font-semibold text-[#7A7363]">
               <span>40g</span>
               <span>150g</span>
               <span>300g</span>
             </div>
           </div>
 
-          <div className="pt-3 flex items-center justify-end space-x-3">
+          <div className="pt-2 flex items-center justify-end space-x-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
+              className="px-4 py-2 text-xs font-bold text-[#7A7363] hover:text-[#1E1E24] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-dark-900 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-extrabold text-xs bg-[#1E1E24] hover:bg-[#2F2F38] text-white shadow-md disabled:opacity-50 transition-all active:scale-95"
             >
               <Check className="w-3.5 h-3.5" />
               <span>{saving ? 'Saving...' : 'Save Targets'}</span>

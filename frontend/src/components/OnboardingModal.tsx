@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Gender, ActivityLevel } from '../types';
-import { ChevronRight, ChevronLeft, Check, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Check, Sparkles, AlertCircle } from 'lucide-react';
 
 interface RegisterWizardProps {
   onComplete: (data: any) => Promise<void>;
@@ -95,47 +95,54 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
       <div className="flex items-center justify-between mb-6 px-1">
         <div className="flex items-center space-x-2">
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step >= 1 ? 'bg-emerald-500 text-dark-900' : 'bg-dark-800 text-slate-500'
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              step >= 1
+                ? 'bg-[#1E1E24] text-white shadow-sm'
+                : 'bg-[#FAF7F0] border border-[#E2DBD0] text-[#A09886]'
             }`}
           >
             1
           </div>
-          <span className={`text-xs font-semibold ${step >= 1 ? 'text-slate-200' : 'text-slate-500'}`}>
+          <span className={`text-xs font-bold transition-colors ${step >= 1 ? 'text-[#1E1E24]' : 'text-[#A09886]'}`}>
             Biometrics
           </span>
         </div>
-        <div className="w-8 h-0.5 bg-slate-800" />
+        <div className="w-8 h-0.5 bg-[#E8E2D2]" />
         <div className="flex items-center space-x-2">
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step >= 2 ? 'bg-emerald-500 text-dark-900' : 'bg-dark-800 text-slate-500'
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              step >= 2
+                ? 'bg-[#1E1E24] text-white shadow-sm'
+                : 'bg-[#FAF7F0] border border-[#E2DBD0] text-[#A09886]'
             }`}
           >
             2
           </div>
-          <span className={`text-xs font-semibold ${step >= 2 ? 'text-slate-200' : 'text-slate-500'}`}>
+          <span className={`text-xs font-bold transition-colors ${step >= 2 ? 'text-[#1E1E24]' : 'text-[#A09886]'}`}>
             Activity
           </span>
         </div>
-        <div className="w-8 h-0.5 bg-slate-800" />
+        <div className="w-8 h-0.5 bg-[#E8E2D2]" />
         <div className="flex items-center space-x-2">
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step === 3 ? 'bg-emerald-500 text-dark-900' : 'bg-dark-800 text-slate-500'
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              step === 3
+                ? 'bg-[#1E1E24] text-white shadow-sm'
+                : 'bg-[#FAF7F0] border border-[#E2DBD0] text-[#A09886]'
             }`}
           >
             3
           </div>
-          <span className={`text-xs font-semibold ${step === 3 ? 'text-slate-200' : 'text-slate-500'}`}>
+          <span className={`text-xs font-bold transition-colors ${step === 3 ? 'text-[#1E1E24]' : 'text-[#A09886]'}`}>
             Goals
           </span>
         </div>
       </div>
 
       {formError && (
-        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-          {formError}
+        <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{formError}</span>
         </div>
       )}
 
@@ -143,49 +150,49 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
       {step === 1 && (
         <div className="space-y-4 animate-in fade-in">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+            <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Full Name</label>
             <input
               type="text"
               required
               placeholder="e.g. Gautham Krishna"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3.5 py-2.5 text-xs text-[#1E1E24] placeholder-[#A09886] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Email</label>
               <input
                 type="email"
                 required
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3.5 py-2.5 text-xs text-[#1E1E24] placeholder-[#A09886] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Password</label>
               <input
                 type="password"
                 required
                 placeholder="Min 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3.5 py-2.5 text-xs text-[#1E1E24] placeholder-[#A09886] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Gender</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Gender</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as Gender)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3 py-2.5 text-xs text-[#1E1E24] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all cursor-pointer"
               >
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
@@ -193,49 +200,49 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Age</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Age</label>
               <input
                 type="number"
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value) || 25)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3 py-2.5 text-xs text-[#1E1E24] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Height (cm)</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Height (cm)</label>
               <input
                 type="number"
                 value={heightCm}
                 onChange={(e) => setHeightCm(parseInt(e.target.value) || 170)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3 py-2.5 text-xs text-[#1E1E24] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Weight (kg)</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Weight (kg)</label>
               <input
                 type="number"
                 step="0.5"
                 value={weightKg}
                 onChange={(e) => setWeightKg(parseFloat(e.target.value) || 70)}
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3 py-2.5 text-xs text-[#1E1E24] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all"
               />
             </div>
           </div>
 
-          <div className="pt-4 flex justify-between">
+          <div className="pt-4 flex justify-between items-center">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
+              className="px-3 py-2 text-xs font-bold text-[#7A7363] hover:text-[#1E1E24] transition-colors"
             >
               Back to Login
             </button>
             <button
               type="button"
               onClick={handleNextFromStep1}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-dark-900 shadow-lg shadow-emerald-500/20"
+              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-extrabold text-xs bg-[#1E1E24] hover:bg-[#2F2F38] text-white shadow-md transition-all active:scale-95"
             >
               <span>Next: Activity Level</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -247,7 +254,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
       {/* STEP 2: Activity Level */}
       {step === 2 && (
         <div className="space-y-4 animate-in fade-in">
-          <p className="text-xs text-slate-400 mb-2">
+          <p className="text-xs text-[#7A7363] mb-2 leading-relaxed">
             Select your regular physical activity routine to calculate your Total Daily Energy Expenditure (TDEE).
           </p>
 
@@ -256,22 +263,22 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
               {
                 id: 'SEDENTARY' as ActivityLevel,
                 title: 'Sedentary',
-                desc: 'Desk job, little to no structured exercise (1.2x BMR)',
+                desc: 'Desk job, little to no structured exercise (1.2× BMR)',
               },
               {
                 id: 'LIGHT' as ActivityLevel,
                 title: 'Lightly Active',
-                desc: 'Light exercise or sports 1–3 days/week (1.375x BMR)',
+                desc: 'Light exercise or sports 1–3 days/week (1.375× BMR)',
               },
               {
                 id: 'MODERATE' as ActivityLevel,
                 title: 'Moderately Active',
-                desc: 'Moderate exercise 3–5 days/week (1.55x BMR)',
+                desc: 'Moderate exercise 3–5 days/week (1.55× BMR)',
               },
               {
                 id: 'ACTIVE' as ActivityLevel,
                 title: 'Very Active',
-                desc: 'Hard exercise or sports 6–7 days/week (1.725x BMR)',
+                desc: 'Hard exercise or sports 6–7 days/week (1.725× BMR)',
               },
             ].map((option) => {
               const isSelected = activityLevel === option.id;
@@ -279,29 +286,29 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
                 <div
                   key={option.id}
                   onClick={() => setActivityLevel(option.id)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                  className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300 shadow-sm'
-                      : 'bg-dark-800/80 border-slate-700/80 text-slate-300 hover:border-slate-600'
+                      ? 'bg-[#F2F8EE] border-[#88B868] text-[#1E1E24] shadow-sm ring-1 ring-[#88B868]/40'
+                      : 'bg-[#FAF7F0] border-[#E2DBD0] text-[#1E1E24] hover:border-[#D5CCBD] hover:bg-[#F5EFE3]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-bold">{option.title}</h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{option.desc}</p>
+                      <h4 className="text-xs font-bold text-[#1E1E24]">{option.title}</h4>
+                      <p className="text-[11px] text-[#7A7363] mt-0.5">{option.desc}</p>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#437A22] shrink-0" />}
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="pt-4 flex justify-between">
+          <div className="pt-4 flex justify-between items-center">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="flex items-center space-x-1 px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
+              className="flex items-center space-x-1 px-3 py-2 text-xs font-bold text-[#7A7363] hover:text-[#1E1E24] transition-colors"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -309,7 +316,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-dark-900 shadow-lg shadow-emerald-500/20"
+              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl font-extrabold text-xs bg-[#1E1E24] hover:bg-[#2F2F38] text-white shadow-md transition-all active:scale-95"
             >
               <span>Next: View Goals</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -321,41 +328,41 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
       {/* STEP 3: Goals & Mifflin-St Jeor TDEE Review */}
       {step === 3 && (
         <div className="space-y-4 animate-in fade-in">
-          <div className="p-4 rounded-xl bg-gradient-to-br from-dark-800 to-dark-850 border border-emerald-500/30 text-center">
-            <div className="inline-flex p-2 rounded-xl bg-emerald-500/20 text-emerald-400 mb-2">
-              <Sparkles className="w-5 h-5" />
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F0] border border-[#E8E2D2] text-center">
+            <div className="inline-flex p-2 rounded-2xl bg-[#FFAEBF] text-[#1E1E24] mb-2 shadow-sm">
+              <Sparkles className="w-5 h-5 text-[#9E4D61]" />
             </div>
-            <h3 className="text-sm font-bold text-white">Your Personalized Targets Calculated!</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Derived scientifically via the <strong className="text-slate-300">Mifflin-St Jeor Equation</strong>
+            <h3 className="text-sm font-black text-[#1E1E24]">Your Personalized Targets Calculated!</h3>
+            <p className="text-xs text-[#7A7363] mt-1">
+              Derived scientifically via the <strong className="text-[#1E1E24]">Mifflin-St Jeor Equation</strong>
             </p>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="bg-dark-900/80 p-3 rounded-xl border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Daily Calories</span>
-                <p className="text-2xl font-black text-emerald-400 mt-0.5">{estimates.targetCalories}</p>
-                <span className="text-[10px] text-slate-400">kcal / day (TDEE)</span>
+              <div className="bg-[#FDE382] p-3.5 rounded-2xl border border-[#ECCF69]/50 text-left shadow-sm">
+                <span className="text-[10px] text-[#63552D] uppercase font-extrabold tracking-wide">Daily Calories</span>
+                <p className="text-2xl font-black text-[#1E1E24] mt-0.5">{estimates.targetCalories}</p>
+                <span className="text-[10px] font-semibold text-[#63552D]">kcal / day (TDEE)</span>
               </div>
 
-              <div className="bg-dark-900/80 p-3 rounded-xl border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Daily Protein</span>
-                <p className="text-2xl font-black text-blue-400 mt-0.5">{estimates.targetProtein}</p>
-                <span className="text-[10px] text-slate-400">grams (1.8g / kg)</span>
+              <div className="bg-[#FFC4D2] p-3.5 rounded-2xl border border-[#FFAEBF]/50 text-left shadow-sm">
+                <span className="text-[10px] text-[#7A3648] uppercase font-extrabold tracking-wide">Daily Protein</span>
+                <p className="text-2xl font-black text-[#1E1E24] mt-0.5">{estimates.targetProtein}</p>
+                <span className="text-[10px] font-semibold text-[#7A3648]">grams (1.8g / kg)</span>
               </div>
             </div>
 
-            <div className="mt-3 text-[11px] text-slate-400 text-left bg-dark-900/50 p-2.5 rounded-lg border border-slate-800">
-              <p>• Basal Metabolic Rate (BMR): <strong className="text-slate-200">{estimates.bmr} kcal</strong></p>
-              <p>• Estimated Carbs: <strong className="text-amber-400">~{Math.round((estimates.targetCalories * 0.5) / 4)}g</strong></p>
-              <p>• Estimated Healthy Fats: <strong className="text-pink-400">~{Math.round((estimates.targetCalories * 0.25) / 9)}g</strong></p>
+            <div className="mt-3 text-[11px] text-[#666052] text-left bg-white p-3 rounded-xl border border-[#E2DBD0] space-y-1">
+              <p>• Basal Metabolic Rate (BMR): <strong className="text-[#1E1E24]">{estimates.bmr} kcal</strong></p>
+              <p>• Estimated Carbs: <strong className="text-[#3D5321]">~{Math.round((estimates.targetCalories * 0.5) / 4)}g</strong></p>
+              <p>• Estimated Healthy Fats: <strong className="text-[#1E3B68]">~{Math.round((estimates.targetCalories * 0.25) / 9)}g</strong></p>
             </div>
           </div>
 
-          <div className="pt-3 flex justify-between">
+          <div className="pt-3 flex justify-between items-center">
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="flex items-center space-x-1 px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
+              className="flex items-center space-x-1 px-3 py-2 text-xs font-bold text-[#7A7363] hover:text-[#1E1E24] transition-colors"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -364,7 +371,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ onComplete, onCa
               type="button"
               disabled={loading}
               onClick={handleSubmit}
-              className="flex items-center space-x-1.5 px-6 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-dark-900 shadow-xl shadow-emerald-500/20 disabled:opacity-50"
+              className="flex items-center space-x-1.5 px-6 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm bg-[#1E1E24] hover:bg-[#2F2F38] text-white shadow-md disabled:opacity-50 transition-all active:scale-95"
             >
               <Check className="w-4 h-4" />
               <span>{loading ? 'Creating Account...' : 'Complete & Start Tracking'}</span>

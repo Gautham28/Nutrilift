@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nutrilift-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nutrilift
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nutrilift"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nutrilift-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nutrilift
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: ${JWT_SECRET:-nutrilift_super_secret_jwt_key_with_at_least_32_bytes_2026!}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nutrilift-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:80"
+
+volumes:
+  postgres_data:

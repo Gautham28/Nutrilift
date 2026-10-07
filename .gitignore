@@ -1,0 +1,68 @@
+# ------------------------------------------------------------------------------
+# NutriLift - Git Ignore Configuration
+# ------------------------------------------------------------------------------
+
+# Environment variables & secrets (CRITICAL: Never commit to GitHub)
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# macOS & System files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+Thumbs.db
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+.gemini/
+
+# Frontend dependencies and builds (React / Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+node_modules/
+dist/
+
+# NPM / Package manager logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Backend build outputs & dependencies (Maven / Java)
+backend/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+
+# Local / temporary test databases
+*.db
+*.sqlite
+nutrilift.mv.db
+nutrilift.trace.db
+
+# Docker volumes / local mount artifacts
+postgres_data/

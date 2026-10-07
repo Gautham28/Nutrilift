@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RegisterWizard } from './OnboardingModal';
-import { Flame, LogIn, Sparkles, UserPlus, ShieldCheck, HeartHandshake } from 'lucide-react';
+import { Flame, LogIn, Sparkles, UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
 
-export const AuthScreen: React.FC = () => {
+interface AuthScreenProps {
+  onSuccess?: () => void;
+  onContinueAsGuest?: () => void;
+}
+
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess, onContinueAsGuest }) => {
   const { login, register } = useAuth();
   const [isRegisterMode, setIsRegisterMode] = useState<boolean>(false);
 
@@ -22,10 +27,30 @@ export const AuthScreen: React.FC = () => {
 
     try {
       await login(email.trim().toLowerCase(), password);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err: any) {
       setLoginError(
         err.response?.data?.message || 'Invalid email or password. Please verify your credentials or register.'
       );
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleRegister = async (data: any) => {
+    setLoginLoading(true);
+    setLoginError(null);
+    try {
+      await register(data);
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to complete registration.';
+      setLoginError(msg);
+      throw err; // rethrow so RegisterWizard shows the error
     } finally {
       setLoginLoading(false);
     }
@@ -39,7 +64,10 @@ export const AuthScreen: React.FC = () => {
 
     try {
       await login('demo@nutrilift.com', 'password123');
-    } catch (err) {
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch {
       // If demo user doesn't exist yet in DB, create it automatically!
       try {
         await register({
@@ -52,6 +80,9 @@ export const AuthScreen: React.FC = () => {
           weightKg: 72,
           activityLevel: 'MODERATE',
         });
+        if (onSuccess) {
+          onSuccess();
+        }
       } catch (regErr: any) {
         setLoginError(regErr.response?.data?.message || 'Could not auto-provision demo user.');
       }
@@ -61,38 +92,34 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 flex flex-col justify-center items-center p-4 relative overflow-hidden selection:bg-emerald-500/30">
-      {/* Background radial gradient lights */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="w-full flex flex-col justify-center items-center py-6 px-4">
       {/* Brand Header */}
-      <div className="text-center mb-6 z-10">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500 shadow-xl shadow-emerald-500/20 mb-3 text-dark-900">
-          <Flame className="w-8 h-8 text-slate-950 fill-slate-950" />
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#FFAEBF] shadow-sm mb-2 text-[#1E1E24]">
+          <Flame className="w-6 h-6 fill-[#1E1E24]" />
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">
-          Nutri<span className="text-emerald-400">Lift</span>
+        <h1 className="text-2xl font-black tracking-tight text-[#1E1E24]">
+          Nutri<span className="text-[#9E4D61]">Lift</span>
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm">
+        <p className="text-xs text-[#7A7363] mt-0.5">
           AI Calorie & Macro Intelligence Tailored for Indian Diets
         </p>
       </div>
 
       {/* Main Auth Card */}
-      <div className="w-full max-w-md glass-panel rounded-2xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl relative z-10">
+      <div className="w-full max-w-md bg-white rounded-[28px] p-6 sm:p-7 border border-[#E8E2D2] shadow-xl">
         {/* Toggle Switch */}
-        <div className="flex bg-dark-800 p-1 rounded-xl mb-6 border border-slate-700/80">
+        <div className="flex bg-[#FAF7F0] p-1 rounded-2xl mb-6 border border-[#E8E2D2]">
           <button
             type="button"
             onClick={() => {
               setIsRegisterMode(false);
               setLoginError(null);
             }}
-            className={`flex-1 flex items-center justify-center space-x-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 flex items-center justify-center space-x-1.5 py-2 text-xs font-bold rounded-xl transition-all ${
               !isRegisterMode
-                ? 'bg-emerald-500 text-dark-900 shadow-md font-bold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#1E1E24] text-white shadow-sm'
+                : 'text-[#7A7363] hover:text-[#1E1E24]'
             }`}
           >
             <LogIn className="w-3.5 h-3.5" />
@@ -104,10 +131,10 @@ export const AuthScreen: React.FC = () => {
               setIsRegisterMode(true);
               setLoginError(null);
             }}
-            className={`flex-1 flex items-center justify-center space-x-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex-1 flex items-center justify-center space-x-1.5 py-2 text-xs font-bold rounded-xl transition-all ${
               isRegisterMode
-                ? 'bg-emerald-500 text-dark-900 shadow-md font-bold'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#1E1E24] text-white shadow-sm'
+                : 'text-[#7A7363] hover:text-[#1E1E24]'
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
@@ -117,28 +144,29 @@ export const AuthScreen: React.FC = () => {
 
         {/* Login Mode */}
         {!isRegisterMode ? (
-          <form onSubmit={handleLogin} className="space-y-4 animate-in fade-in">
+          <form onSubmit={handleLogin} className="space-y-4">
             {loginError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-                {loginError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{loginError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
+              <label className="block text-xs font-bold text-[#1E1E24] mb-1.5">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3.5 py-2.5 text-xs text-[#1E1E24] placeholder-[#A09886] font-semibold outline-none focus:border-[#FFAEBF]"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-300">Password</label>
+                <label className="text-xs font-bold text-[#1E1E24]">Password</label>
               </div>
               <input
                 type="password"
@@ -146,54 +174,49 @@ export const AuthScreen: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-dark-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3.5 py-2.5 text-xs text-[#1E1E24] placeholder-[#A09886] font-semibold outline-none focus:border-[#FFAEBF]"
               />
             </div>
 
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-dark-900 shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all"
+              className="w-full py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm bg-[#1E1E24] hover:bg-[#2F2F38] text-white shadow-md disabled:opacity-50 transition-all flex items-center justify-center space-x-1.5"
             >
-              {loginLoading ? 'Signing in...' : 'Sign In'}
+              <span>{loginLoading ? 'Signing in...' : 'Sign In'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
 
             {/* Quick Demo button */}
-            <div className="pt-2 text-center">
+            <div className="pt-2 space-y-2 text-center">
               <button
                 type="button"
                 onClick={handleQuickDemo}
                 disabled={loginLoading}
-                className="w-full py-2 px-3 text-xs font-medium rounded-xl bg-dark-800 hover:bg-dark-700 text-emerald-400 border border-slate-700 transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-2 px-3 text-xs font-bold rounded-xl bg-[#FAF7F0] hover:bg-[#F2ECE0] text-[#1E1E24] border border-[#E2DBD0] transition-colors flex items-center justify-center space-x-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-[#C24161]" />
                 <span>Try Instant Demo Account</span>
               </button>
+
+              {onContinueAsGuest && (
+                <button
+                  type="button"
+                  onClick={onContinueAsGuest}
+                  className="w-full py-1.5 text-[11px] font-semibold text-[#7A7363] hover:text-[#1E1E24] transition-colors"
+                >
+                  Continue as Guest without login &rarr;
+                </button>
+              )}
             </div>
           </form>
         ) : (
           <RegisterWizard
-            onComplete={register}
+            onComplete={handleRegister}
             onCancel={() => setIsRegisterMode(false)}
             loading={loginLoading}
           />
         )}
-      </div>
-
-      {/* Footer Features summary */}
-      <div className="mt-8 flex items-center space-x-6 text-slate-500 text-xs z-10">
-        <div className="flex items-center space-x-1.5">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>Mifflin-St Jeor TDEE</span>
-        </div>
-        <div className="flex items-center space-x-1.5">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
-          <span>Gemini AI Engine</span>
-        </div>
-        <div className="flex items-center space-x-1.5">
-          <HeartHandshake className="w-4 h-4 text-cyan-400" />
-          <span>Indian Foods</span>
-        </div>
       </div>
     </div>
   );

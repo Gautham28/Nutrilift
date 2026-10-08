@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FoodItem, FoodEntry, MealType, TodayEntriesResponse } from '../types';
 import { entriesApi } from '../services/api';
-import { calculateFoodItem, CalculatedFood } from '../utils/nutritionEngine';
 import {
   Flame,
-  Sparkles,
   Plus,
   Trash2,
   Check,
@@ -30,11 +28,9 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
   onOpenTargetModal,
   onLogout,
 }) => {
-  // Input for food calculation
+  // Input for AI food logging
   const [foodInput, setFoodInput] = useState('');
   const [mealType, setMealType] = useState<MealType>('LUNCH');
-  const [calculatedItems, setCalculatedItems] = useState<CalculatedFood[]>([]);
-  const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -74,114 +70,47 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
   const consumedFat = Math.round(Number(todayData?.totalFat) || 0);
   const remainingCalories = Math.max(0, targetCalories - consumedCalories);
 
-  // Live calculation as user types or clicks preset
   const handleInputChange = (text: string) => {
     setFoodInput(text);
     setErrorMsg(null);
-    if (!text.trim()) {
-      setCalculatedItems([]);
-      return;
-    }
-    const results = calculateFoodItem(text);
-    setCalculatedItems(results);
   };
 
-  // Explicit calculation button (tries backend AI first, falls back to engine)
-  const handleCalculateAi = async () => {
-    if (!foodInput.trim()) {
-      setErrorMsg('Please type a food item first.');
-      return;
-    }
-    setErrorMsg(null);
-    setIsCalculating(true);
-
-    try {
-      const aiResults = await entriesApi.parseWithAi(foodInput, mealType);
-      if (aiResults && aiResults.length > 0) {
-        const formatted: CalculatedFood[] = aiResults.map((item) => ({
-          foodName: item.foodName,
-          quantity: item.quantity,
-          unit: item.unit,
-          calories: item.calories,
-          proteinG: item.proteinG,
-          carbsG: item.carbsG,
-          fatG: item.fatG,
-        }));
-        setCalculatedItems(formatted);
-      } else {
-        setCalculatedItems(calculateFoodItem(foodInput));
-      }
-    } catch {
-      setCalculatedItems(calculateFoodItem(foodInput));
-    } finally {
-      setIsCalculating(false);
-    }
-  };
-
-  // Save calculated food to today's log
+  // Save food solely with AI
   const handleSaveMeal = async () => {
-    const itemsToSave = calculatedItems.length > 0 ? calculatedItems : calculateFoodItem(foodInput);
-
-    if (itemsToSave.length === 0) {
-      setErrorMsg('Please enter a valid food item.');
+    const text = foodInput.trim();
+    if (!text) {
+      setErrorMsg('Please enter what you ate (e.g. 3 dosa, black chana curry).');
       return;
     }
 
     setIsSaving(true);
     setErrorMsg(null);
 
-    const payload: FoodItem[] = itemsToSave.map((item) => ({
-      foodName: item.foodName,
-      quantity: Number(item.quantity) || 1,
-      unit: item.unit || 'serving',
-      calories: Number(item.calories) || 0,
-      proteinG: Number(item.proteinG) || 0,
-      carbsG: Number(item.carbsG) || 0,
-      fatG: Number(item.fatG) || 0,
-    }));
-
     try {
+      // 100% Real AI Parsing via Gemini backend
+      const parsedItems = await entriesApi.parseWithAi(text, mealType);
+
+      if (!parsedItems || parsedItems.length === 0) {
+        setErrorMsg('No food items recognized by AI. Please describe what you ate (e.g. 3 dosa, black chana curry).');
+        setIsSaving(false);
+        return;
+      }
+
       const todayStr = new Date().toISOString().split('T')[0];
-      await entriesApi.createEntries(todayStr, mealType, payload);
+      await entriesApi.createEntries(todayStr, mealType, parsedItems);
       await fetchToday();
-      setFoodInput('');
-      setCalculatedItems([]);
-      setSuccessMsg(`Logged ${payload.length} item(s) to ${mealType.toLowerCase()}!`);
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch {
-      // Local fallback if backend unauthenticated
-      const mockEntries: FoodEntry[] = payload.map((p, idx) => ({
-        ...p,
-        id: `mock-${Date.now()}-${idx}`,
-        userId: user?.id || 'demo-user',
-        entryDate: new Date().toISOString().split('T')[0],
-        mealType: mealType,
-      }));
 
-      setTodayData((prev) => {
-        const newEntries = [...(prev?.entries || []), ...mockEntries];
-        return {
-          date: new Date().toISOString().split('T')[0],
-          groupedByMeal: {
-            BREAKFAST: newEntries.filter((e) => e.mealType === 'BREAKFAST'),
-            LUNCH: newEntries.filter((e) => e.mealType === 'LUNCH'),
-            DINNER: newEntries.filter((e) => e.mealType === 'DINNER'),
-            SNACK: newEntries.filter((e) => e.mealType === 'SNACK'),
-          },
-          entries: newEntries,
-          totalCalories: consumedCalories + payload.reduce((s, i) => s + i.calories, 0),
-          totalProtein: consumedProtein + payload.reduce((s, i) => s + i.proteinG, 0),
-          totalCarbs: consumedCarbs + payload.reduce((s, i) => s + i.carbsG, 0),
-          totalFat: consumedFat + payload.reduce((s, i) => s + i.fatG, 0),
-          targetCalories: targetCalories,
-          targetProteinG: targetProtein,
-        };
-      });
-
+      const totalCals = parsedItems.reduce((acc, cur) => acc + (cur.calories || 0), 0);
+      const itemsSummary = parsedItems.map((i) => `${i.quantity} ${i.unit} ${i.foodName}`).join(', ');
       setFoodInput('');
-      setCalculatedItems([]);
-      setSuccessMsg(`Logged ${payload.length} item(s) to ${mealType.toLowerCase()}!`);
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setSuccessMsg(`Logged with AI: ${itemsSummary} (${totalCals} kcal)!`);
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'AI could not recognize food in your input. Please specify what you ate.';
+      setErrorMsg(msg);
     } finally {
       setIsSaving(false);
     }
@@ -194,8 +123,8 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
       await fetchToday();
     } catch {
       if (todayData) {
-        const remaining = todayData.entries.filter((e) => e.id !== id);
-        const delItem = todayData.entries.find((e) => e.id === id);
+        const remaining = todayData.entries.filter((e: FoodEntry) => e.id !== id);
+        const delItem = todayData.entries.find((e: FoodEntry) => e.id === id);
         setTodayData({
           ...todayData,
           entries: remaining,
@@ -208,21 +137,7 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
     }
   };
 
-  // Totals for current calculated preview
-  const calcCalories = calculatedItems.reduce((acc, cur) => acc + (Number(cur.calories) || 0), 0);
-  const calcProtein = calculatedItems.reduce((acc, cur) => acc + (Number(cur.proteinG) || 0), 0);
-  const calcCarbs = calculatedItems.reduce((acc, cur) => acc + (Number(cur.carbsG) || 0), 0);
-  const calcFat = calculatedItems.reduce((acc, cur) => acc + (Number(cur.fatG) || 0), 0);
 
-  // Quick staple presets
-  const presets = [
-    { label: '2 Rotis & Dal', text: '2 rotis with 1 bowl dal tadka', type: 'LUNCH' as MealType },
-    { label: '100g Paneer', text: '100g paneer bhurji', type: 'LUNCH' as MealType },
-    { label: '2 Eggs & Toast', text: '2 boiled eggs with 2 slices toast', type: 'BREAKFAST' as MealType },
-    { label: 'Chicken Biryani', text: '1 plate chicken biryani', type: 'DINNER' as MealType },
-    { label: 'Idli & Sambar', text: '3 idlis with 1 bowl sambar', type: 'BREAKFAST' as MealType },
-    { label: 'Chai & Biscuits', text: '1 cup chai with 2 biscuits', type: 'SNACK' as MealType },
-  ];
 
   const mealsList: { type: MealType; title: string; icon: any; color: string }[] = [
     { type: 'BREAKFAST', title: 'Breakfast', icon: Sunrise, color: 'bg-[#FFD4DF] text-[#7A1F38]' },
@@ -393,32 +308,24 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
         </div>
       </section>
 
-      {/* 3. THE MAIN FEATURE: TYPE FOOD & CALCULATE (FRONT & CENTER) */}
-      <section aria-label="Calculate Food" className="bg-[#FEEBF0] rounded-[28px] p-5 sm:p-6 border border-[#FBCFD8] shadow-sm space-y-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-black text-[#1E1E24] tracking-tight">
-            Type Food Item & Calculate
-          </h2>
-          <p className="text-xs text-[#7A3648] mt-0.5">
-            Type in natural language (e.g. "2 rotis with dal", "100g paneer", "2 eggs", "chicken biryani")
-          </p>
-        </div>
+      {/* 3. STREAMLINED AI INPUT BAR: Ultra-clean & Simple */}
+      <section aria-label="Quick Log Food" className="space-y-2">
+        <div className="bg-white rounded-2xl p-2 sm:p-2.5 border border-[#E2DBD0] shadow-sm hover:border-[#D5CCBD] focus-within:border-[#1E1E24] focus-within:ring-2 focus-within:ring-[#1E1E24]/5 focus-within:shadow-md transition-all flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Meal selector */}
+          <div className="shrink-0">
+            <select
+              value={mealType}
+              onChange={(e) => setMealType(e.target.value as MealType)}
+              className="w-full sm:w-auto bg-[#FAF7F0] hover:bg-[#F2ECE0] text-xs font-bold text-[#1E1E24] rounded-xl px-3 py-2.5 border border-[#E2DBD0] outline-none cursor-pointer transition-colors"
+            >
+              <option value="BREAKFAST">🌅 Breakfast</option>
+              <option value="LUNCH">☀️ Lunch</option>
+              <option value="DINNER">🌙 Dinner</option>
+              <option value="SNACK">🍎 Snack</option>
+            </select>
+          </div>
 
-        {/* Big Input Row */}
-        <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#F7CDD7] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {/* Meal selector dropdown pill */}
-          <select
-            value={mealType}
-            onChange={(e) => setMealType(e.target.value as MealType)}
-            className="bg-[#FAF7F0] text-xs font-bold text-[#1E1E24] rounded-xl px-3 py-2 border border-[#E6DFD2] outline-none cursor-pointer shrink-0"
-          >
-            <option value="BREAKFAST">🌅 Breakfast</option>
-            <option value="LUNCH">☀️ Lunch</option>
-            <option value="DINNER">🌙 Dinner</option>
-            <option value="SNACK">🍎 Snack</option>
-          </select>
-
-          {/* Text input */}
+          {/* Natural language AI input */}
           <input
             type="text"
             value={foodInput}
@@ -426,109 +333,41 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSaveMeal();
             }}
-            placeholder="Type food (e.g. 2 rotis with 1 bowl dal, 100g chicken breast)..."
-            className="flex-1 bg-transparent px-2 text-sm font-semibold text-[#1E1E24] placeholder:text-[#A09886] outline-none"
+            placeholder="What did you eat? (e.g. 2 rotis with dal, 100g paneer, 2 eggs)..."
+            className="flex-1 bg-transparent px-2.5 py-1 text-xs sm:text-sm font-semibold text-[#1E1E24] placeholder:text-[#A09886] outline-none"
           />
 
-          {/* Action buttons */}
-          <div className="flex items-center space-x-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleCalculateAi}
-              disabled={isCalculating || !foodInput.trim()}
-              title="Deep AI Parse"
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#FAF7F0] hover:bg-[#EAE2D2] text-[#1E1E24] text-xs font-bold transition-all disabled:opacity-40 flex items-center space-x-1"
-            >
-              {isCalculating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-[#C24161]" />
-              )}
-              <span className="hidden sm:inline">AI Parse</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSaveMeal}
-              disabled={isSaving || !foodInput.trim()}
-              className="px-5 py-2 rounded-xl bg-[#1E1E24] hover:bg-[#2F2F38] text-white text-xs font-bold flex items-center justify-center space-x-1.5 transition-transform active:scale-95 disabled:opacity-40 shadow-sm"
-            >
-              {isSaving ? (
+          {/* Single smart Log Meal action button with Enter support */}
+          <button
+            type="button"
+            onClick={handleSaveMeal}
+            disabled={isSaving || !foodInput.trim()}
+            className="shrink-0 px-5 py-2.5 rounded-xl bg-[#1E1E24] hover:bg-[#2F2F38] text-white text-xs font-bold flex items-center justify-center space-x-1.5 transition-all active:scale-95 disabled:opacity-40 shadow-sm"
+          >
+            {isSaving ? (
+              <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
+                <span>AI Analyzing...</span>
+              </>
+            ) : (
+              <>
                 <Plus className="w-3.5 h-3.5" />
-              )}
-              <span>Log to {mealType.toLowerCase()}</span>
-            </button>
-          </div>
+                <span>Log Meal</span>
+              </>
+            )}
+          </button>
         </div>
-
-        {/* Quick try presets */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A3648] mr-1">
-            Quick tries:
-          </span>
-          {presets.map((p, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setMealType(p.type);
-                handleInputChange(p.text);
-              }}
-              className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white hover:bg-[#FAF7F0] text-[#4A1525] border border-[#F8BFCD] transition-all"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Calculated Results Live Badges */}
-        {calculatedItems.length > 0 && (
-          <div className="bg-white rounded-2xl p-3.5 border border-[#F7CDD7] shadow-sm animate-in fade-in space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-extrabold text-[#1E1E24]">
-                Calculated Nutrients:
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="px-2.5 py-1 rounded-full bg-[#FFD1DD] text-[#69182C] text-xs font-black">
-                  🔥 {calcCalories} kcal
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-[#D1E3FC] text-[#16386C] text-xs font-black">
-                  🥩 {calcProtein.toFixed(1)}g Protein
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-[#D7E8BC] text-[#315014] text-xs font-black">
-                  🍞 {calcCarbs.toFixed(1)}g Carbs
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-[#FCE3AF] text-[#644408] text-xs font-black">
-                  🥑 {calcFat.toFixed(1)}g Fat
-                </span>
-              </div>
-            </div>
-
-            {/* Individual items breakdown if multi-item */}
-            <div className="flex flex-wrap gap-2 pt-1 border-t border-[#F5EFE3] text-[11px] text-[#6E6758]">
-              {calculatedItems.map((item, idx) => (
-                <div key={idx} className="bg-[#FAF7F0] px-2.5 py-1 rounded-lg border border-[#EAE2D2]">
-                  <strong>{item.foodName}</strong> ({item.quantity} {item.unit}) &rarr;{' '}
-                  <span className="text-[#1E1E24] font-bold">{item.calories} kcal</span> •{' '}
-                  <span className="text-[#16386C] font-semibold">{item.proteinG}g P</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Notifications */}
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-100 text-rose-800 text-xs flex items-center space-x-2">
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="p-3 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center space-x-2 animate-in fade-in">
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2 animate-in fade-in">
             <Check className="w-4 h-4 shrink-0 text-emerald-600" />
             <span>{successMsg}</span>
           </div>

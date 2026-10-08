@@ -31,12 +31,13 @@ public class AiParsingService {
             Assume standard Indian portion sizes if not explicitly specified (e.g., 1 bowl = 150g, 1 piece of roti = 30g).
             Return ONLY a valid JSON array. Do not include markdown formatting like ```json. Do not include any conversational text.
             Each object in the array must have these exact keys: food_name, quantity, unit, calories, protein_g, carbs_g, fat_g.
+            If the input text does not describe any food, dish, or beverage (for example, greetings like 'hello', questions, or random non-food words), return an empty JSON array [].
             """;
 
-    @Value("${gemini.api.key:}")
+    @Value("${gemini.api.key:AQ.Ab8RN6K0inGGTgMeZvHK6RbJ5sqVXkIIQwn1EkyvNbVoNX_f0A}")
     private String geminiApiKey;
 
-    @Value("${gemini.model:gemini-1.5-flash}")
+    @Value("${gemini.model:gemini-flash-latest}")
     private String geminiModel;
 
     private final ObjectMapper objectMapper;
@@ -54,25 +55,10 @@ public class AiParsingService {
 
         String cleanedInput = rawText.trim();
 
-        // 1. Check if Gemini API key is configured
         if (isGeminiApiKeyConfigured()) {
-            try {
-                return callGeminiApi(cleanedInput, mealType);
-            } catch (Exception e) {
-                log.warn("Gemini API call failed: {}. Attempting fallback parser...", e.getMessage());
-                List<FoodItemDto> fallbackResult = fallbackIndianFoodParser(cleanedInput);
-                if (!fallbackResult.isEmpty()) {
-                    return fallbackResult;
-                }
-                throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
-            }
+            return callGeminiApi(cleanedInput, mealType);
         } else {
-            log.info("Gemini API key not configured or placeholder detected. Utilizing Indian Nutrition fallback engine.");
-            List<FoodItemDto> fallbackResult = fallbackIndianFoodParser(cleanedInput);
-            if (!fallbackResult.isEmpty()) {
-                return fallbackResult;
-            }
-            throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
+            throw new BadRequestException("AI service is not configured. Please contact support.");
         }
     }
 
@@ -84,8 +70,31 @@ public class AiParsingService {
     }
 
     private List<FoodItemDto> callGeminiApi(String rawText, String mealType) {
+        List<String> modelsToTry = List.of(geminiModel, "gemini-flash-latest", "gemini-2.5-flash");
+        Set<String> attempted = new LinkedHashSet<>();
+        Exception lastException = null;
+
+        for (String modelName : modelsToTry) {
+            if (!attempted.add(modelName)) continue;
+            try {
+                return executeGeminiCall(modelName, rawText, mealType);
+            } catch (BadRequestException bre) {
+                throw bre;
+            } catch (Exception ex) {
+                lastException = ex;
+                log.warn("Gemini model {} failed ({}), trying next candidate...", modelName, ex.getMessage());
+            }
+        }
+
+        if (lastException != null) {
+            log.error("All Gemini model attempts failed", lastException);
+        }
+        throw new BadRequestException("AI service is currently busy. Please try again in a moment.");
+    }
+
+    private List<FoodItemDto> executeGeminiCall(String modelName, String rawText, String mealType) throws Exception {
         String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-                geminiModel, geminiApiKey);
+                modelName, geminiApiKey);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -107,31 +116,26 @@ public class AiParsingService {
 
         ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
+            throw new RuntimeException("Gemini returned non-200: " + response.getStatusCode());
         }
 
-        try {
-            JsonNode root = objectMapper.readTree(response.getBody());
-            JsonNode candidates = root.path("candidates");
-            if (candidates.isEmpty()) {
-                throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
-            }
-
-            String contentText = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
-            String cleanedJson = stripMarkdown(contentText);
-
-            List<FoodItemDto> items = objectMapper.readValue(cleanedJson, new TypeReference<List<FoodItemDto>>() {});
-            if (items == null || items.isEmpty()) {
-                throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
-            }
-            for (FoodItemDto item : items) {
-                item.setIsAiParsed(true);
-            }
-            return items;
-        } catch (Exception ex) {
-            log.error("Failed to parse Gemini JSON response", ex);
-            throw new BadRequestException("AI could not parse the meal. Please try rephrasing or use manual entry.");
+        JsonNode root = objectMapper.readTree(response.getBody());
+        JsonNode candidates = root.path("candidates");
+        if (candidates.isEmpty()) {
+            throw new BadRequestException("No food or meal recognized. Please describe what you ate.");
         }
+
+        String contentText = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+        String cleanedJson = stripMarkdown(contentText);
+
+        List<FoodItemDto> items = objectMapper.readValue(cleanedJson, new TypeReference<List<FoodItemDto>>() {});
+        if (items == null || items.isEmpty()) {
+            throw new BadRequestException("No food or meal recognized. Please describe what you ate (e.g. '3 dosa, black chana curry').");
+        }
+        for (FoodItemDto item : items) {
+            item.setIsAiParsed(true);
+        }
+        return items;
     }
 
     private String stripMarkdown(String raw) {
@@ -189,20 +193,6 @@ public class AiParsingService {
                         true
                 ));
             }
-        }
-
-        // If no specific match, create a generic parsed item if meaningful text exists
-        if (result.isEmpty() && rawText.length() > 2) {
-            result.add(new FoodItemDto(
-                    formatTitleCase(rawText),
-                    BigDecimal.valueOf(1),
-                    "portion",
-                    280,
-                    BigDecimal.valueOf(9.0),
-                    BigDecimal.valueOf(38.0),
-                    BigDecimal.valueOf(9.5),
-                    true
-            ));
         }
 
         return result;

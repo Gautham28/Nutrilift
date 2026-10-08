@@ -27,5 +27,5 @@ jwt:
 
 gemini:
   api:
-    key: ${GEMINI_API_KEY:}
-  model: ${GEMINI_MODEL:gemini-1.5-flash}
+    key: ${GEMINI_API_KEY:AQ.Ab8RN6K0inGGTgMeZvHK6RbJ5sqVXkIIQwn1EkyvNbVoNX_f0A}
+  model: ${GEMINI_MODEL:gemini-2.5-flash}

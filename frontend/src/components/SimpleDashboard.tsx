@@ -15,18 +15,21 @@ import {
   Sliders,
   LogOut,
   RefreshCw,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 
 interface SimpleDashboardProps {
   user: any;
   onOpenTargetModal: () => void;
   onLogout: () => void;
+  onNavigateToCalendar?: () => void;
 }
 
 export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
   user,
   onOpenTargetModal,
   onLogout,
+  onNavigateToCalendar,
 }) => {
   // Input for AI food logging
   const [foodInput, setFoodInput] = useState('');
@@ -165,6 +168,16 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
+          {onNavigateToCalendar && (
+            <button
+              onClick={onNavigateToCalendar}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EE] hover:bg-[#F2ECE0] border border-[#E2DBD0] text-xs font-bold text-[#1E1E24] transition-colors shadow-sm"
+            >
+              <CalendarIcon className="w-3.5 h-3.5 text-[#FF358B]" />
+              <span>Calendar</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenTargetModal}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EE] hover:bg-[#F2ECE0] border border-[#E2DBD0] text-xs font-bold text-[#1E1E24] transition-colors shadow-sm"

@@ -207,9 +207,9 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
             <button
               onClick={onOpenPlateScanner}
               title="Scan Meal Plate with AI Vision"
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#FFAEBF] hover:bg-[#ff9eb2] text-[#141418] text-xs font-bold transition-transform active:scale-95 shadow-sm"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EE] hover:bg-[#F2ECE0] border border-[#E2DBD0] text-xs font-bold text-[#1E1E24] transition-colors shadow-sm"
             >
-              <Camera className="w-3.5 h-3.5 text-[#141418]" />
+              <Camera className="w-3.5 h-3.5 text-[#9E4D61]" />
               <span className="hidden sm:inline">Scan Plate</span>
             </button>
           )}

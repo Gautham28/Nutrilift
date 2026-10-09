@@ -7,9 +7,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  ChevronRight,
   Flame,
-  User as UserIcon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,15 +32,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`bg-[#141418] text-[#A0A0AB] flex flex-col justify-between p-4 sm:p-5 rounded-[32px] select-none shadow-2xl transition-all duration-300 relative border border-[#272730] shrink-0 ${
-        isCollapsed ? 'w-20' : 'w-56 sm:w-60'
+        isCollapsed ? 'w-20 items-center' : 'w-56 sm:w-60'
       }`}
     >
-      <div>
+      <div className="w-full">
         {/* Brand Header */}
-        <div className="flex items-center justify-between pb-6 border-b border-[#24242D] mb-5">
-          <div className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-[#FFAEBF] flex items-center justify-center text-[#141418] shrink-0 shadow-sm">
-              <Flame className="w-4 h-4 fill-[#141418]" />
+        <div
+          className={`flex items-center ${
+            isCollapsed ? 'justify-center' : 'justify-between'
+          } pb-6 border-b border-[#24242D] mb-5`}
+        >
+          <div
+            onClick={isCollapsed ? onToggleCollapse : undefined}
+            className={`flex items-center space-x-2.5 overflow-hidden ${
+              isCollapsed ? 'cursor-pointer hover:scale-105 transition-transform' : ''
+            }`}
+            title={isCollapsed ? 'Click logo to expand sidebar' : undefined}
+          >
+            <div className="w-9 h-9 rounded-2xl bg-[#FFAEBF] flex items-center justify-center text-[#141418] shrink-0 shadow-sm">
+              <Flame className="w-5 h-5 fill-[#141418]" />
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
@@ -56,24 +64,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Pink circular collapse toggle matching Image 2 */}
-          {onToggleCollapse && (
+          {/* Pink circular collapse toggle - ONLY shown when expanded */}
+          {!isCollapsed && onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title="Collapse sidebar"
               className="w-5 h-5 rounded-full bg-[#FFAEBF] hover:bg-[#FFC4D2] text-[#141418] flex items-center justify-center text-xs transition-transform active:scale-95 shadow-sm shrink-0"
             >
-              {isCollapsed ? (
-                <ChevronRight className="w-3 h-3 stroke-[2.5]" />
-              ) : (
-                <ChevronLeft className="w-3 h-3 stroke-[2.5]" />
-              )}
+              <ChevronLeft className="w-3 h-3 stroke-[2.5]" />
             </button>
           )}
         </div>
 
         {/* Section: General */}
-        <div className="mb-6 space-y-1.5">
+        <div className="mb-6 space-y-1.5 w-full">
           {!isCollapsed && (
             <p className="text-[10px] font-bold text-[#52525B] uppercase tracking-wider px-3 mb-2">
               General
@@ -85,20 +89,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSelectTab('dashboard')}
             title="Dashboard"
             className={`w-full flex items-center ${
-              isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-            } py-2.5 rounded-2xl text-xs font-bold transition-all relative ${
+              isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+            } rounded-2xl text-xs transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-[#22222A] text-white shadow-sm'
-                : 'text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]'
+                ? 'bg-[#FFAEBF] text-[#141418] font-black shadow-md'
+                : 'text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22] font-semibold'
             }`}
           >
-            {/* Left Accent Bar matching Image 2 */}
-            {activeTab === 'dashboard' && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#FFAEBF] rounded-r-full" />
-            )}
             <LayoutGrid
               className={`w-4 h-4 shrink-0 ${
-                activeTab === 'dashboard' ? 'text-[#FFAEBF]' : 'text-[#8E8E9A]'
+                activeTab === 'dashboard' ? 'text-[#141418]' : 'text-[#8E8E9A]'
               }`}
             />
             {!isCollapsed && <span className="truncate">Dashboard</span>}
@@ -109,19 +109,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSelectTab('calendar')}
             title="Activity Calendar"
             className={`w-full flex items-center ${
-              isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-            } py-2.5 rounded-2xl text-xs font-bold transition-all relative ${
+              isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+            } rounded-2xl text-xs transition-all ${
               activeTab === 'calendar'
-                ? 'bg-[#22222A] text-white shadow-sm'
-                : 'text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]'
+                ? 'bg-[#FFAEBF] text-[#141418] font-black shadow-md'
+                : 'text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22] font-semibold'
             }`}
           >
-            {activeTab === 'calendar' && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#FFAEBF] rounded-r-full" />
-            )}
             <Calendar
               className={`w-4 h-4 shrink-0 ${
-                activeTab === 'calendar' ? 'text-[#FFAEBF]' : 'text-[#8E8E9A]'
+                activeTab === 'calendar' ? 'text-[#141418]' : 'text-[#8E8E9A]'
               }`}
             />
             {!isCollapsed && <span className="truncate">Calendar</span>}
@@ -132,8 +129,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onOpenTargetModal}
             title="Adjust Targets"
             className={`w-full flex items-center ${
-              isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-            } py-2.5 rounded-2xl text-xs font-bold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
+              isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+            } rounded-2xl text-xs font-semibold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
           >
             <Sliders className="w-4 h-4 shrink-0" />
             {!isCollapsed && <span className="truncate">Targets</span>}
@@ -141,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Section: Tools */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 w-full">
           {!isCollapsed && (
             <p className="text-[10px] font-bold text-[#52525B] uppercase tracking-wider px-3 mb-2">
               Tools
@@ -152,8 +149,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSelectTab('calendar')}
             title="History"
             className={`w-full flex items-center ${
-              isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-            } py-2.5 rounded-2xl text-xs font-bold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
+              isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+            } rounded-2xl text-xs font-semibold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
           >
             <Clock className="w-4 h-4 shrink-0" />
             {!isCollapsed && <span className="truncate">History</span>}
@@ -163,8 +160,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onOpenTargetModal}
             title="Settings"
             className={`w-full flex items-center ${
-              isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-            } py-2.5 rounded-2xl text-xs font-bold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
+              isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+            } rounded-2xl text-xs font-semibold transition-all text-[#8E8E9A] hover:text-white hover:bg-[#1C1C22]`}
           >
             <Settings className="w-4 h-4 shrink-0" />
             {!isCollapsed && <span className="truncate">Settings</span>}
@@ -173,7 +170,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Footer: User Info & Logout */}
-      <div className="pt-4 border-t border-[#24242D] space-y-2">
+      <div className="pt-4 border-t border-[#24242D] space-y-2 w-full">
         {!isCollapsed && (
           <div className="flex items-center space-x-2.5 px-2 py-1">
             <div className="w-7 h-7 rounded-full bg-[#272732] border border-[#343440] flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -190,8 +187,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={onLogout}
           title="Log out"
           className={`w-full flex items-center ${
-            isCollapsed ? 'justify-center px-0' : 'space-x-3 px-3.5'
-          } py-2 rounded-2xl text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors`}
+            isCollapsed ? 'justify-center px-0 h-10 w-10 mx-auto' : 'space-x-3 px-3.5 py-2'
+          } rounded-2xl text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors`}
         >
           <LogOut className="w-4 h-4 shrink-0" />
           {!isCollapsed && <span>Log out</span>}

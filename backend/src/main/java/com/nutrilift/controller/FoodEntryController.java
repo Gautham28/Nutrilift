@@ -56,7 +56,13 @@ public class FoodEntryController {
     @GetMapping("/stats")
     public ResponseEntity<List<DailyStatsDto>> getStats(
             @AuthenticationPrincipal UserPrincipal currentUser,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "7") int days) {
+        if (startDate != null && endDate != null) {
+            List<DailyStatsDto> stats = foodEntryService.getStatsByDateRange(currentUser.getId(), startDate, endDate);
+            return ResponseEntity.ok(stats);
+        }
         List<DailyStatsDto> stats = foodEntryService.getStats(currentUser.getId(), days);
         return ResponseEntity.ok(stats);
     }

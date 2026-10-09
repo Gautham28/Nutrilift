@@ -41,63 +41,13 @@ interface ActivityCalendarProps {
   };
   onSelectDay?: (day: DayActivityData) => void;
   selectedDateStr?: string;
+  onMonthStatsCalculated?: (stats: {
+    veryHighDays: number;
+    highDays: number;
+    totalLoggedDays: number;
+    hitRatePct: number;
+  }) => void;
 }
-
-// Generate realistic simulated history when user has no backend records for days
-const generateBaselineMonthData = (
-  year: number,
-  month: number,
-  targetCals: number,
-  targetProt: number
-): Record<string, { cals: number; prot: number; carbs: number; fat: number }> => {
-  const result: Record<string, { cals: number; prot: number; carbs: number; fat: number }> = {};
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
-    const dateStr = dateObj.toISOString().split('T')[0];
-    const dayOfWeek = dateObj.getDay(); // 0 = Sun, 6 = Sat
-
-    // Deterministic pseudo-random seed based on day
-    const seed = (year * 31 + month * 17 + d * 13) % 100;
-
-    // Distribute into tiers to match the user's reference screenshot:
-    // ~25% Very high (pink)
-    // ~40% High (lime green)
-    // ~20% Moderate (cyan blue)
-    // ~15% Low (off-white)
-    let adherence: number;
-    if (seed > 75 || (dayOfWeek === 1 && seed > 40)) {
-      // Very high (>= 100%)
-      adherence = 1.02 + ((seed % 15) / 100);
-    } else if (seed > 38) {
-      // High (75% - 99%)
-      adherence = 0.78 + ((seed % 20) / 100);
-    } else if (seed > 16) {
-      // Moderate (50% - 74%)
-      adherence = 0.52 + ((seed % 22) / 100);
-    } else {
-      // Low (< 50%)
-      adherence = 0.15 + ((seed % 30) / 100);
-    }
-
-    const cals = Math.round(targetCals * adherence);
-    const protAdherence = seed > 50 ? adherence * 1.05 : adherence * 0.9;
-    const prot = Math.round(targetProt * protAdherence);
-    const rem = Math.max(150, cals - prot * 4);
-    const carbs = Math.round((rem * 0.6) / 4);
-    const fat = Math.round((rem * 0.4) / 9);
-
-    result[dateStr] = {
-      cals,
-      prot,
-      carbs,
-      fat,
-    };
-  }
-
-  return result;
-};
 
 export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
   targetCalories,
@@ -105,10 +55,12 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
   todayStats,
   onSelectDay,
   selectedDateStr,
+  onMonthStatsCalculated,
 }) => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [mode, setMode] = useState<AdherenceMode>('protein');
   const [statsData, setStatsData] = useState<Record<string, DailyStats>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
 
   // Popover state
@@ -117,28 +69,47 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real stats from backend
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // Fetch real stats directly from database for the selected month range
   useEffect(() => {
     let isMounted = true;
     const loadStats = async () => {
+      setIsLoading(true);
+      const startStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+      const endStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
       try {
-        const stats = await entriesApi.getStats(90);
-        if (isMounted && stats && stats.length > 0) {
+        const stats = await entriesApi.getStats(daysInMonth, startStr, endStr);
+        if (isMounted && stats) {
           const map: Record<string, DailyStats> = {};
           stats.forEach((s) => {
             map[s.date] = s;
           });
           setStatsData(map);
         }
-      } catch {
-        // Fallback for guest mode / offline
+      } catch (err) {
+        console.error('Failed to load stats from database:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+
     loadStats();
     return () => {
       isMounted = false;
     };
-  }, [todayStats]);
+  }, [currentYear, currentMonth, daysInMonth, todayStats]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -151,18 +122,6 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-
-  const baselineMonthData = useMemo(() => {
-    return generateBaselineMonthData(currentYear, currentMonth, targetCalories, targetProtein);
-  }, [currentYear, currentMonth, targetCalories, targetProtein]);
-
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   };
@@ -172,9 +131,6 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
   };
 
   // Build the 7-column calendar matrix (Monday - Sunday)
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  // Get weekday of the 1st of month: 0=Sun, 1=Mon...6=Sat.
-  // We want Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
   let firstDayWeekday = new Date(currentYear, currentMonth, 1).getDay();
   firstDayWeekday = (firstDayWeekday + 6) % 7; // Convert so Monday is 0 and Sunday is 6
 
@@ -184,6 +140,10 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 
   const daysGrid: (DayActivityData | null)[] = useMemo(() => {
     const list: (DayActivityData | null)[] = [];
+
+    let veryHighCount = 0;
+    let highCount = 0;
+    let loggedCount = 0;
 
     // Empty cells before the 1st day of month
     for (let i = 0; i < firstDayWeekday; i++) {
@@ -202,48 +162,40 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
       let fat = 0;
       let hasData = false;
 
-      if (isToday && todayStats) {
+      const backendEntry = statsData[dateStr];
+      if (backendEntry && (backendEntry.totalCalories > 0 || backendEntry.totalProtein > 0)) {
+        cals = backendEntry.totalCalories;
+        prot = Math.round(Number(backendEntry.totalProtein) || 0);
+        carbs = Math.round(Number(backendEntry.totalCarbs) || 0);
+        fat = Math.round(Number(backendEntry.totalFat) || 0);
+        hasData = true;
+      } else if (isToday && todayStats && (todayStats.totalCalories > 0 || todayStats.totalProtein > 0)) {
         cals = todayStats.totalCalories || 0;
         prot = Math.round(Number(todayStats.totalProtein) || 0);
         carbs = Math.round(Number(todayStats.totalCarbs) || 0);
         fat = Math.round(Number(todayStats.totalFat) || 0);
-        hasData = cals > 0 || prot > 0;
-      } else {
-        const backendEntry = statsData[dateStr];
-        if (backendEntry && backendEntry.totalCalories > 0) {
-          cals = backendEntry.totalCalories;
-          prot = Math.round(Number(backendEntry.totalProtein) || 0);
-          carbs = Math.round(Number(backendEntry.totalCarbs) || 0);
-          fat = Math.round(Number(backendEntry.totalFat) || 0);
-          hasData = true;
-        } else if (baselineMonthData[dateStr]) {
-          const fallback = baselineMonthData[dateStr];
-          cals = fallback.cals;
-          prot = fallback.prot;
-          carbs = fallback.carbs;
-          fat = fallback.fat;
-          hasData = true;
-        }
+        hasData = true;
       }
 
       const currentVal = mode === 'protein' ? prot : cals;
       const targetVal = mode === 'protein' ? targetProtein : targetCalories;
-      const adherencePct = targetVal > 0 ? Math.round((currentVal / targetVal) * 100) : 0;
+      const adherencePct = (targetVal > 0 && hasData) ? Math.round((currentVal / targetVal) * 100) : 0;
 
-      // Classify into the 4 tiers matching the reference design:
-      // Very high: >= 100%
-      // High: 75% - 99%
-      // Moderate: 50% - 74%
-      // Low: < 50%
+      // Classify strictly by real logged data
       let tier: AdherenceTier = 'low';
-      if (adherencePct >= 100) {
-        tier = 'very_high';
-      } else if (adherencePct >= 75) {
-        tier = 'high';
-      } else if (adherencePct >= 50) {
-        tier = 'moderate';
-      } else {
-        tier = 'low';
+      if (hasData) {
+        loggedCount++;
+        if (adherencePct >= 100) {
+          tier = 'very_high';
+          veryHighCount++;
+        } else if (adherencePct >= 75) {
+          tier = 'high';
+          highCount++;
+        } else if (adherencePct >= 50) {
+          tier = 'moderate';
+        } else {
+          tier = 'low';
+        }
       }
 
       list.push({
@@ -274,31 +226,63 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
     targetCalories,
     targetProtein,
     statsData,
-    baselineMonthData,
     todayStats,
   ]);
 
+  // Compute month summary metrics cleanly from daysGrid
+  const monthMetrics = useMemo(() => {
+    let veryHighCount = 0;
+    let highCount = 0;
+    let loggedCount = 0;
+
+    daysGrid.forEach((day) => {
+      if (!day || !day.hasData) return;
+      loggedCount++;
+      if (day.tier === 'very_high') veryHighCount++;
+      else if (day.tier === 'high') highCount++;
+    });
+
+    const totalMet = veryHighCount + highCount;
+    const hitRate = loggedCount > 0 ? Math.round((totalMet / loggedCount) * 100) : 0;
+    return {
+      veryHighDays: veryHighCount,
+      highDays: highCount,
+      totalLoggedDays: loggedCount,
+      hitRatePct: hitRate,
+    };
+  }, [daysGrid]);
+
+  // Safely notify parent using ref to eliminate any infinite re-render loops
+  const onMonthStatsRef = useRef(onMonthStatsCalculated);
+  useEffect(() => {
+    onMonthStatsRef.current = onMonthStatsCalculated;
+  }, [onMonthStatsCalculated]);
+
+  useEffect(() => {
+    onMonthStatsRef.current?.(monthMetrics);
+  }, [monthMetrics.veryHighDays, monthMetrics.highDays, monthMetrics.totalLoggedDays, monthMetrics.hitRatePct]);
+
   // Color styling matching Image 1
-  const getTierClasses = (tier: AdherenceTier, isSelected: boolean) => {
+  const getTierClasses = (tier: AdherenceTier, hasData: boolean, isSelected: boolean) => {
     let base = '';
-    switch (tier) {
-      case 'very_high':
-        // Vibrant hot pink with white number (Image 1)
-        base = 'bg-[#FF358B] text-white shadow-[0_2px_8px_rgba(255,53,139,0.35)] hover:bg-[#F4257D]';
-        break;
-      case 'high':
-        // Bright lime-green with dark green-black number (Image 1)
-        base = 'bg-[#98EE38] text-[#163604] hover:bg-[#8AE426]';
-        break;
-      case 'moderate':
-        // Soft sky blue with dark navy number (Image 1)
-        base = 'bg-[#BAE6FD] text-[#0C4A6E] hover:bg-[#A5DDFB]';
-        break;
-      case 'low':
-      default:
-        // Warm light off-white / light cream with muted number (Image 1)
-        base = 'bg-[#F2ECE1] text-[#7A7363] hover:bg-[#EAE2D4]';
-        break;
+    if (!hasData) {
+      base = 'bg-[#F2ECE1] text-[#7A7363] hover:bg-[#EAE2D4]';
+    } else {
+      switch (tier) {
+        case 'very_high':
+          base = 'bg-[#FF358B] text-white shadow-[0_2px_8px_rgba(255,53,139,0.35)] hover:bg-[#F4257D]';
+          break;
+        case 'high':
+          base = 'bg-[#98EE38] text-[#163604] hover:bg-[#8AE426]';
+          break;
+        case 'moderate':
+          base = 'bg-[#BAE6FD] text-[#0C4A6E] hover:bg-[#A5DDFB]';
+          break;
+        case 'low':
+        default:
+          base = 'bg-[#F2ECE1] text-[#7A7363] hover:bg-[#EAE2D4]';
+          break;
+      }
     }
 
     if (isSelected) {
@@ -337,7 +321,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
     const r = 26;
     const circumference = 2 * Math.PI * r;
 
-    if (totalMacroCals === 0) {
+    if (!hoveredDay.hasData || totalMacroCals === 0) {
       return {
         hasMacros: false,
         circumference,
@@ -387,11 +371,18 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
       {/* 1. TOP HEADER: "Activity" and "month v" Pill Dropdown */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#1E1E24] tracking-tight">
-            Activity
-          </h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-[#1E1E24] tracking-tight">
+              Activity
+            </h2>
+            {isLoading && (
+              <span className="text-[10px] text-[#A09886] font-semibold animate-pulse">
+                Syncing with DB...
+              </span>
+            )}
+          </div>
           <p className="text-xs text-[#7A7363] mt-0.5 font-medium">
-            Daily goal adherence distribution
+            Daily goal adherence connected directly to database logs
           </p>
         </div>
 
@@ -491,7 +482,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
           }
 
           const isSelected = selectedDateStr === day.dateStr;
-          const tierClass = getTierClasses(day.tier, isSelected);
+          const tierClass = getTierClasses(day.tier, day.hasData, isSelected);
 
           return (
             <button
@@ -537,7 +528,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
           {/* Low */}
           <div className="flex items-center space-x-2">
             <span className="w-3.5 h-3.5 rounded-full bg-[#F2ECE1] border border-[#DDD6C5]" />
-            <span className="text-[#1E1E24] font-bold">Low</span>
+            <span className="text-[#1E1E24] font-bold">Low / Empty</span>
           </div>
         </div>
 
@@ -571,13 +562,20 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
                   })}
                 </p>
                 <p className="text-[10px] text-[#A09886]">
-                  {hoveredDay.isToday ? "Today's Log" : 'Historical Day'}
+                  {hoveredDay.isToday ? "Today's Log" : 'Database Log'}
                 </p>
               </div>
 
               {/* Status Badge */}
               <div>
                 {(() => {
+                  if (!hoveredDay.hasData || hoveredDay.totalCalories === 0) {
+                    return (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886]">
+                        ⚪ No Entries
+                      </span>
+                    );
+                  }
                   switch (hoveredDay.tier) {
                     case 'very_high':
                       return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ActivityCalendar, DayActivityData } from './ActivityCalendar';
 import { FoodEntry, User } from '../types';
 import { entriesApi } from '../services/api';
@@ -40,6 +40,29 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
   const [selectedDay, setSelectedDay] = useState<DayActivityData | null>(null);
   const [dayEntries, setDayEntries] = useState<FoodEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
+  const [monthStats, setMonthStats] = useState({
+    veryHighDays: 0,
+    highDays: 0,
+    totalLoggedDays: 0,
+    hitRatePct: 0,
+  });
+
+  const handleMonthStatsCalculated = useCallback(
+    (stats: { veryHighDays: number; highDays: number; totalLoggedDays: number; hitRatePct: number }) => {
+      setMonthStats((prev) => {
+        if (
+          prev.veryHighDays === stats.veryHighDays &&
+          prev.highDays === stats.highDays &&
+          prev.totalLoggedDays === stats.totalLoggedDays &&
+          prev.hitRatePct === stats.hitRatePct
+        ) {
+          return prev;
+        }
+        return stats;
+      });
+    },
+    []
+  );
 
   // Fetch entries for selected day
   useEffect(() => {
@@ -112,6 +135,7 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
             todayStats={todayStats}
             selectedDateStr={selectedDay?.dateStr}
             onSelectDay={(day) => setSelectedDay(day)}
+            onMonthStatsCalculated={handleMonthStatsCalculated}
           />
         </div>
 
@@ -260,15 +284,25 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between py-1 border-b border-[#E8E2D2]">
                 <span className="text-[#7A7363] font-medium">Very High Days</span>
-                <span className="font-black text-[#FF358B]">7 days (23%)</span>
+                <span className="font-black text-[#FF358B]">
+                  {monthStats.veryHighDays} {monthStats.veryHighDays === 1 ? 'day' : 'days'}
+                </span>
               </div>
               <div className="flex items-center justify-between py-1 border-b border-[#E8E2D2]">
                 <span className="text-[#7A7363] font-medium">High Adherence Days</span>
-                <span className="font-black text-[#1F5403]">13 days (43%)</span>
+                <span className="font-black text-[#1F5403]">
+                  {monthStats.highDays} {monthStats.highDays === 1 ? 'day' : 'days'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-[#E8E2D2]">
+                <span className="text-[#7A7363] font-medium">Active Logged Days</span>
+                <span className="font-black text-[#1E1E24]">
+                  {monthStats.totalLoggedDays} {monthStats.totalLoggedDays === 1 ? 'day' : 'days'}
+                </span>
               </div>
               <div className="flex items-center justify-between py-1 border-b border-[#E8E2D2]">
                 <span className="text-[#7A7363] font-medium">Total Goal Hit Rate</span>
-                <span className="font-black text-[#1E1E24]">66% of month</span>
+                <span className="font-black text-[#1E1E24]">{monthStats.hitRatePct}%</span>
               </div>
             </div>
 

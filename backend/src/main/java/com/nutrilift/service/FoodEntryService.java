@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -141,6 +142,59 @@ public class FoodEntryService {
 
         List<DailyStatsDto> stats = new ArrayList<>();
         for (int i = 0; i < days; i++) {
+            LocalDate current = startDate.plusDays(i);
+            List<FoodEntry> dayEntries = byDate.getOrDefault(current, Collections.emptyList());
+
+            int cals = 0;
+            BigDecimal p = BigDecimal.ZERO;
+            BigDecimal c = BigDecimal.ZERO;
+            BigDecimal f = BigDecimal.ZERO;
+
+            for (FoodEntry fe : dayEntries) {
+                if (fe.getCalories() != null) cals += fe.getCalories();
+                if (fe.getProteinG() != null) p = p.add(fe.getProteinG());
+                if (fe.getCarbsG() != null) c = c.add(fe.getCarbsG());
+                if (fe.getFatG() != null) f = f.add(fe.getFatG());
+            }
+
+            stats.add(new DailyStatsDto(
+                    current,
+                    cals,
+                    p.setScale(1, RoundingMode.HALF_UP),
+                    c.setScale(1, RoundingMode.HALF_UP),
+                    f.setScale(1, RoundingMode.HALF_UP),
+                    user.getTargetCalories(),
+                    user.getTargetProteinG()
+            ));
+        }
+
+        return stats;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyStatsDto> getStatsByDateRange(UUID userId, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) startDate = LocalDate.now().minusDays(30);
+        if (endDate == null) endDate = LocalDate.now();
+        if (startDate.isAfter(endDate)) {
+            LocalDate tmp = startDate;
+            startDate = endDate;
+            endDate = tmp;
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<FoodEntry> entries = foodEntryRepository.findByUserIdAndEntryDateBetweenOrderByEntryDateAsc(
+                userId, startDate, endDate
+        );
+
+        // Group entries by date
+        Map<LocalDate, List<FoodEntry>> byDate = entries.stream()
+                .collect(Collectors.groupingBy(FoodEntry::getEntryDate));
+
+        long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        List<DailyStatsDto> stats = new ArrayList<>();
+        for (int i = 0; i < totalDays; i++) {
             LocalDate current = startDate.plusDays(i);
             List<FoodEntry> dayEntries = byDate.getOrDefault(current, Collections.emptyList());
 

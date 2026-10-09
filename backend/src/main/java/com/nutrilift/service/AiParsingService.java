@@ -82,9 +82,11 @@ public class AiParsingService {
 
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+    private final FoodItemCacheService foodItemCacheService;
 
-    public AiParsingService(ObjectMapper objectMapper) {
+    public AiParsingService(ObjectMapper objectMapper, FoodItemCacheService foodItemCacheService) {
         this.objectMapper = objectMapper;
+        this.foodItemCacheService = foodItemCacheService;
         this.restTemplate = new RestTemplate();
     }
 
@@ -95,11 +97,26 @@ public class AiParsingService {
 
         String cleanedInput = rawText.trim();
 
+        // 1. High-throughput Semantic Cache check (Redis / In-memory fallback: <15ms)
+        Optional<List<FoodItemDto>> cached = foodItemCacheService.getCachedMeal(cleanedInput, mealType);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
+        // 2. Cache Miss: Execute Gemini LLM inference
+        List<FoodItemDto> items;
         if (isGeminiApiKeyConfigured()) {
-            return callGeminiApi(cleanedInput, mealType);
+            items = callGeminiApi(cleanedInput, mealType);
         } else {
             throw new BadRequestException("AI service is not configured. Please contact support.");
         }
+
+        // 3. Write back to cache for subsequent 0-cost queries (7-day TTL)
+        if (items != null && !items.isEmpty()) {
+            foodItemCacheService.cacheMeal(cleanedInput, mealType, items);
+        }
+
+        return items;
     }
 
     private boolean isGeminiApiKeyConfigured() {

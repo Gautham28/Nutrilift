@@ -10,7 +10,9 @@ import com.nutrilift.repository.FoodEntryRepository;
 import com.nutrilift.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -35,6 +37,22 @@ public class FoodEntryService {
 
     public List<FoodItemDto> parseWithAi(AiParseRequest request) {
         return aiParsingService.parseMeal(request.getRawText(), request.getMealType());
+    }
+
+    public PlateScanResponseDto scanMealPlate(MultipartFile file, String mealType, String notes) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Please select or capture a meal image");
+        }
+        try {
+            String mimeType = file.getContentType();
+            if (mimeType == null || !mimeType.startsWith("image/")) {
+                mimeType = "image/jpeg";
+            }
+            byte[] imageBytes = file.getBytes();
+            return aiParsingService.scanPlate(imageBytes, mimeType, mealType, notes);
+        } catch (IOException e) {
+            throw new BadRequestException("Failed to read image file: " + e.getMessage());
+        }
     }
 
     @Transactional

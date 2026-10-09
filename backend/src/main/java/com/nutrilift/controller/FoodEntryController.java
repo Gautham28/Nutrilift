@@ -14,6 +14,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+
 @RestController
 @RequestMapping("/api/entries")
 public class FoodEntryController {
@@ -28,6 +31,15 @@ public class FoodEntryController {
     public ResponseEntity<List<FoodItemDto>> parseWithAi(@Valid @RequestBody AiParseRequest request) {
         List<FoodItemDto> parsedItems = foodEntryService.parseWithAi(request);
         return ResponseEntity.ok(parsedItems);
+    }
+
+    @PostMapping(value = "/scan-plate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PlateScanResponseDto> scanPlate(
+            @RequestParam("image") MultipartFile image,
+            @RequestParam(value = "mealType", defaultValue = "LUNCH") String mealType,
+            @RequestParam(value = "notes", required = false) String notes) {
+        PlateScanResponseDto response = foodEntryService.scanMealPlate(image, mealType, notes);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

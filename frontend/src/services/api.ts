@@ -9,6 +9,7 @@ import {
   MealType,
   AiTargetRequest,
   AiTargetResponse,
+  PlateScanResponse,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -83,6 +84,20 @@ export const profileApi = {
 export const entriesApi = {
   parseWithAi: async (rawText: string, mealType: MealType): Promise<FoodItem[]> => {
     const res = await apiClient.post<FoodItem[]>('/entries/ai-parse', { rawText, mealType });
+    return res.data;
+  },
+  scanPlate: async (file: File, mealType: MealType, notes?: string): Promise<PlateScanResponse> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('mealType', mealType);
+    if (notes) {
+      formData.append('notes', notes);
+    }
+    const res = await apiClient.post<PlateScanResponse>('/entries/scan-plate', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return res.data;
   },
   createEntries: async (entryDate: string, mealType: MealType, items: FoodItem[]): Promise<FoodEntry[]> => {

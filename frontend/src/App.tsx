@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { SimpleDashboard } from './components/SimpleDashboard';
 import { TargetSettingsModal } from './components/TargetSettingsModal';
 import { AiTargetAdvisorModal } from './components/AiTargetAdvisorModal';
+import { PlateScannerModal } from './components/PlateScannerModal';
 import { AuthScreen } from './components/AuthScreen';
 import { Sidebar } from './components/Sidebar';
 import { ActivityCalendarPage } from './components/ActivityCalendarPage';
@@ -16,6 +17,7 @@ const MainApp: React.FC = () => {
 
   const [targetModalOpen, setTargetModalOpen] = useState(false);
   const [aiAdvisorOpen, setAiAdvisorOpen] = useState(false);
+  const [plateScannerOpen, setPlateScannerOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -119,6 +121,7 @@ const MainApp: React.FC = () => {
           }}
           onOpenTargetModal={() => setTargetModalOpen(true)}
           onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
+          onOpenPlateScanner={() => setPlateScannerOpen(true)}
           onLogout={() => {
             if (user) {
               logout();
@@ -142,6 +145,7 @@ const MainApp: React.FC = () => {
               user={user}
               onOpenTargetModal={() => setTargetModalOpen(true)}
               onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
+              onOpenPlateScanner={() => setPlateScannerOpen(true)}
               onNavigateToCalendar={() => setActiveTab('calendar')}
               onLogout={() => {
                 if (user) {
@@ -177,6 +181,13 @@ const MainApp: React.FC = () => {
         onTargetsApplied={(_cals, _prot) => {
           setRefreshKey((prev) => prev + 1);
         }}
+      />
+
+      {/* Multimodal Plate Scanner Modal */}
+      <PlateScannerModal
+        isOpen={plateScannerOpen}
+        onClose={() => setPlateScannerOpen(false)}
+        onMealLogged={() => setRefreshKey((prev) => prev + 1)}
       />
 
       {/* Auth Modal when in guest mode */}

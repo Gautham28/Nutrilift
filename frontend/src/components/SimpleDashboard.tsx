@@ -17,12 +17,14 @@ import {
   RefreshCw,
   Calendar as CalendarIcon,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 
 interface SimpleDashboardProps {
   user: any;
   onOpenTargetModal: () => void;
   onOpenAiAdvisor?: () => void;
+  onOpenPlateScanner?: () => void;
   onLogout: () => void;
   onNavigateToCalendar?: () => void;
 }
@@ -31,6 +33,7 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
   user,
   onOpenTargetModal,
   onOpenAiAdvisor,
+  onOpenPlateScanner,
   onLogout,
   onNavigateToCalendar,
 }) => {
@@ -197,6 +200,17 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5 text-[#FFAEBF]" />
               <span className="hidden sm:inline">AI Advisor</span>
+            </button>
+          )}
+
+          {onOpenPlateScanner && (
+            <button
+              onClick={onOpenPlateScanner}
+              title="Scan Meal Plate with AI Vision"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#FFAEBF] hover:bg-[#ff9eb2] text-[#141418] text-xs font-bold transition-transform active:scale-95 shadow-sm"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#141418]" />
+              <span className="hidden sm:inline">Scan Plate</span>
             </button>
           )}
 
@@ -369,6 +383,19 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
             placeholder="What did you eat? (e.g. 2 rotis with dal, 100g paneer, 2 eggs)..."
             className="flex-1 bg-transparent px-2.5 py-1 text-xs sm:text-sm font-semibold text-[#1E1E24] placeholder:text-[#A09886] outline-none"
           />
+
+          {/* Plate Scanner Camera button */}
+          {onOpenPlateScanner && (
+            <button
+              type="button"
+              onClick={onOpenPlateScanner}
+              title="Snap or upload food plate photo"
+              className="shrink-0 px-3.5 py-2.5 rounded-xl bg-[#FAF6EE] hover:bg-[#F2ECE0] text-[#1E1E24] border border-[#E2DBD0] text-xs font-bold flex items-center justify-center space-x-1.5 transition-all active:scale-95 shadow-2xs"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#9E4D61]" />
+              <span className="hidden md:inline">Scan Plate</span>
+            </button>
+          )}
 
           {/* Single smart Log Meal action button with Enter support */}
           <button

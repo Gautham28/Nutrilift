@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   Flame,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ interface SidebarProps {
   onSelectTab: (tab: 'dashboard' | 'calendar') => void;
   onOpenTargetModal: () => void;
   onOpenAiAdvisor?: () => void;
+  onOpenPlateScanner?: () => void;
   onLogout: () => void;
   userName?: string;
   isCollapsed?: boolean;
@@ -27,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   onOpenTargetModal,
   onOpenAiAdvisor,
+  onOpenPlateScanner,
   onLogout,
   userName = 'Gautham',
   isCollapsed = false,
@@ -163,6 +166,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span>AI Advisor</span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FF358B]/20 text-[#FFAEBF] font-extrabold">
                     AI
+                  </span>
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Multimodal Plate Scanner */}
+          {onOpenPlateScanner && (
+            <button
+              onClick={onOpenPlateScanner}
+              title="Scan Meal Plate"
+              className={`w-full flex items-center ${
+                isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+              } rounded-2xl text-xs font-bold transition-all text-[#FFAEBF] hover:text-white hover:bg-[#1C1C22] group border border-[#FFAEBF]/20 bg-[#FFAEBF]/5`}
+            >
+              <Camera className="w-4 h-4 shrink-0 text-[#FFAEBF] group-hover:scale-110 transition-transform" />
+              {!isCollapsed && (
+                <span className="truncate flex items-center justify-between flex-1">
+                  <span>Plate Scanner</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FFAEBF]/20 text-[#FFAEBF] font-extrabold">
+                    VISION
                   </span>
                 </span>
               )}

@@ -84,3 +84,15 @@ export interface AiTargetResponse {
   actionableTips: string[];
 }
 
+export interface PlateScanResponse {
+  items: FoodItem[];
+  totalCalories: number;
+  totalProteinG: number;
+  totalCarbsG: number;
+  totalFatG: number;
+  visualAnalysis: string;
+  mealType: MealType;
+  isSuccess: boolean;
+}
+
+

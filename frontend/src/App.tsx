@@ -180,7 +180,7 @@ const MainApp: React.FC = () => {
               onClick={() => setAuthModalOpen(false)}
               className="absolute top-4 right-4 text-white z-20 text-sm font-bold bg-black/40 rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
             <AuthScreen
               onSuccess={() => {

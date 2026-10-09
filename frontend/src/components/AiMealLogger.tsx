@@ -105,10 +105,10 @@ export const AiMealLogger: React.FC<AiMealLoggerProps> = ({ onEntriesAdded, onOp
             onChange={(e) => setMealType(e.target.value as MealType)}
             className="bg-dark-800 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
-            <option value="BREAKFAST">🌅 Breakfast</option>
-            <option value="LUNCH">☀️ Lunch</option>
-            <option value="DINNER">🌙 Dinner</option>
-            <option value="SNACK">🍎 Snack</option>
+            <option value="BREAKFAST">Breakfast</option>
+            <option value="LUNCH">Lunch</option>
+            <option value="DINNER">Dinner</option>
+            <option value="SNACK">Snack</option>
           </select>
 
           <button

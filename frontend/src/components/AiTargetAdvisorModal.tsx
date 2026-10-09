@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Lightbulb,
   Zap,
+  Activity,
 } from 'lucide-react';
 
 interface AiTargetAdvisorModalProps {
@@ -25,10 +26,30 @@ interface AiTargetAdvisorModalProps {
 }
 
 const PRESET_GOALS = [
-  { label: '🔥 Lose Belly Fat & Keep Muscle', text: 'I want to burn stubborn belly fat while maintaining my muscle mass. I lift weights 3-4 days a week.' },
-  { label: '💪 Lean Muscle Bulk', text: 'I want to build lean muscle size without adding excess body fat. I do regular strength training.' },
-  { label: '⚡ Body Recomposition (Tone Up)', text: 'I want to tone up, drop a bit of body fat, and improve muscle definition simultaneously.' },
-  { label: '🏃 Athletic Performance & Energy', text: 'I want high daily energy, stamina, and balanced nutrition for an active lifestyle.' },
+  {
+    label: 'Lose Belly Fat & Keep Muscle',
+    icon: Flame,
+    color: 'text-rose-500',
+    text: 'I want to burn stubborn belly fat while maintaining my muscle mass. I lift weights 3-4 days a week.',
+  },
+  {
+    label: 'Lean Muscle Bulk',
+    icon: Dumbbell,
+    color: 'text-indigo-600',
+    text: 'I want to build lean muscle size without adding excess body fat. I do regular strength training.',
+  },
+  {
+    label: 'Body Recomposition (Tone Up)',
+    icon: Zap,
+    color: 'text-amber-500',
+    text: 'I want to tone up, drop a bit of body fat, and improve muscle definition simultaneously.',
+  },
+  {
+    label: 'Athletic Performance & Energy',
+    icon: Activity,
+    color: 'text-emerald-600',
+    text: 'I want high daily energy, stamina, and balanced nutrition for an active lifestyle.',
+  },
 ];
 
 export const AiTargetAdvisorModal: React.FC<AiTargetAdvisorModalProps> = ({
@@ -274,16 +295,20 @@ export const AiTargetAdvisorModal: React.FC<AiTargetAdvisorModalProps> = ({
               <div className="space-y-1.5 pt-1">
                 <p className="text-[10px] font-bold text-[#8C8677]">Or click a quick goal template:</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {PRESET_GOALS.map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => setFitnessGoal(preset.text)}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F2ECE0] border border-[#E2DBD0] text-[11px] font-bold text-[#1E1E24] transition-all hover:scale-[1.01] shadow-2xs text-left"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+                  {PRESET_GOALS.map((preset) => {
+                    const Icon = preset.icon;
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setFitnessGoal(preset.text)}
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F2ECE0] border border-[#E2DBD0] text-[11px] font-bold text-[#1E1E24] transition-all hover:scale-[1.01] shadow-2xs flex items-center space-x-1.5"
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${preset.color} shrink-0`} />
+                        <span>{preset.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

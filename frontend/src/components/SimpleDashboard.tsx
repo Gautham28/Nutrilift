@@ -339,16 +339,22 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
       <section aria-label="Quick Log Food" className="space-y-2">
         <div className="bg-white rounded-2xl p-2 sm:p-2.5 border border-[#E2DBD0] shadow-sm hover:border-[#D5CCBD] focus-within:border-[#1E1E24] focus-within:ring-2 focus-within:ring-[#1E1E24]/5 focus-within:shadow-md transition-all flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Meal selector */}
-          <div className="shrink-0">
+          <div className="shrink-0 relative flex items-center">
+            <div className="absolute left-3 pointer-events-none text-[#7A7363]">
+              {mealType === 'BREAKFAST' && <Sunrise className="w-3.5 h-3.5 text-amber-500" />}
+              {mealType === 'LUNCH' && <Sun className="w-3.5 h-3.5 text-amber-600" />}
+              {mealType === 'DINNER' && <Moon className="w-3.5 h-3.5 text-indigo-500" />}
+              {mealType === 'SNACK' && <Apple className="w-3.5 h-3.5 text-rose-500" />}
+            </div>
             <select
               value={mealType}
               onChange={(e) => setMealType(e.target.value as MealType)}
-              className="w-full sm:w-auto bg-[#FAF7F0] hover:bg-[#F2ECE0] text-xs font-bold text-[#1E1E24] rounded-xl px-3 py-2.5 border border-[#E2DBD0] outline-none cursor-pointer transition-colors"
+              className="w-full sm:w-auto bg-[#FAF7F0] hover:bg-[#F2ECE0] text-xs font-bold text-[#1E1E24] rounded-xl pl-8 pr-3 py-2.5 border border-[#E2DBD0] outline-none cursor-pointer transition-colors"
             >
-              <option value="BREAKFAST">🌅 Breakfast</option>
-              <option value="LUNCH">☀️ Lunch</option>
-              <option value="DINNER">🌙 Dinner</option>
-              <option value="SNACK">🍎 Snack</option>
+              <option value="BREAKFAST">Breakfast</option>
+              <option value="LUNCH">Lunch</option>
+              <option value="DINNER">Dinner</option>
+              <option value="SNACK">Snack</option>
             </select>
           </div>
 

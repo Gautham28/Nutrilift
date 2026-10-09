@@ -11,6 +11,9 @@ import {
   Droplet,
   TrendingUp,
   Award,
+  Target,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 
 interface ActivityCalendarPageProps {
@@ -156,7 +159,7 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
               {/* Status Badge */}
               {selectedDay && (
                 <span
-                  className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
+                  className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
                     selectedDay.tier === 'very_high'
                       ? 'bg-[#FF358B]/15 text-[#FF358B]'
                       : selectedDay.tier === 'high'
@@ -166,10 +169,30 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
                       : 'bg-[#F2ECE1] text-[#7A7363]'
                   }`}
                 >
-                  {selectedDay.tier === 'very_high' && '🎯 Very High'}
-                  {selectedDay.tier === 'high' && '🟢 High Adherence'}
-                  {selectedDay.tier === 'moderate' && '💧 Moderate'}
-                  {selectedDay.tier === 'low' && '⚪ Low / Rest'}
+                  {selectedDay.tier === 'very_high' && (
+                    <>
+                      <Target className="w-3 h-3 text-[#FF358B]" />
+                      <span>Very High</span>
+                    </>
+                  )}
+                  {selectedDay.tier === 'high' && (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-[#1F5403]" />
+                      <span>High Adherence</span>
+                    </>
+                  )}
+                  {selectedDay.tier === 'moderate' && (
+                    <>
+                      <Droplet className="w-3 h-3 text-[#0369A1]" />
+                      <span>Moderate</span>
+                    </>
+                  )}
+                  {selectedDay.tier === 'low' && (
+                    <>
+                      <Circle className="w-2.5 h-2.5 text-[#7A7363]" />
+                      <span>Low / Rest</span>
+                    </>
+                  )}
                 </span>
               )}
             </div>

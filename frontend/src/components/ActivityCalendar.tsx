@@ -8,6 +8,10 @@ import {
   Beef,
   ChevronDown,
   Sparkles,
+  Target,
+  CheckCircle2,
+  Droplet,
+  Circle,
 } from 'lucide-react';
 
 export type AdherenceMode = 'protein' | 'calories';
@@ -546,8 +550,9 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
                 {(() => {
                   if (!hoveredDay.hasData || hoveredDay.totalCalories === 0) {
                     return (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886]">
-                        ⚪ No Entries
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886] flex items-center gap-1">
+                        <Circle className="w-2 h-2 text-[#A09886]" />
+                        <span>No Entries</span>
                       </span>
                     );
                   }
@@ -555,26 +560,30 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
                     case 'very_high':
                       return (
                         <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#FF358B]/20 text-[#FF65A5] border border-[#FF358B]/30 flex items-center gap-1">
-                          <span>🎯 Very High</span>
+                          <Target className="w-3 h-3 text-[#FF65A5]" />
+                          <span>Very High</span>
                         </span>
                       );
                     case 'high':
                       return (
-                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#98EE38]/20 text-[#B2F562] border border-[#98EE38]/30">
-                          🟢 High
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#98EE38]/20 text-[#B2F562] border border-[#98EE38]/30 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-[#B2F562]" />
+                          <span>High</span>
                         </span>
                       );
                     case 'moderate':
                       return (
-                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#BAE6FD]/20 text-[#BAE6FD] border border-[#BAE6FD]/30">
-                          💧 Moderate
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#BAE6FD]/20 text-[#BAE6FD] border border-[#BAE6FD]/30 flex items-center gap-1">
+                          <Droplet className="w-3 h-3 text-[#BAE6FD]" />
+                          <span>Moderate</span>
                         </span>
                       );
                     case 'low':
                     default:
                       return (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886]">
-                          ⚪ Low
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886] flex items-center gap-1">
+                          <Circle className="w-2 h-2 text-[#A09886]" />
+                          <span>Low</span>
                         </span>
                       );
                   }

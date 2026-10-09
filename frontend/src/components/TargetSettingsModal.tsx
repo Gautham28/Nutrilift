@@ -85,9 +85,10 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({
                 onClose();
                 onOpenAiAdvisor();
               }}
-              className="px-3 py-1.5 rounded-xl bg-[#FFAEBF] hover:bg-[#FFC4D2] text-[#141418] text-xs font-black transition-transform active:scale-95 shrink-0 shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-[#FFAEBF] hover:bg-[#FFC4D2] text-[#141418] text-xs font-black transition-transform active:scale-95 shrink-0 shadow-xs flex items-center space-x-1"
             >
-              Ask AI ✨
+              <Sparkles className="w-3.5 h-3.5 fill-[#141418]" />
+              <span>Ask AI</span>
             </button>
           </div>
         )}

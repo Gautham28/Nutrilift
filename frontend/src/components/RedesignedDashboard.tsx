@@ -19,6 +19,7 @@ import {
   Moon,
   Apple,
   Flame,
+  Beef,
   Heart,
   Star,
   RefreshCw,
@@ -322,7 +323,7 @@ export const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#17171C] tracking-tight">
-                Namaste, {user?.fullName || 'Lifter'} 👋
+                Namaste, {user?.fullName || 'Lifter'}
               </h1>
               <p className="text-xs sm:text-sm text-[#736D5F] mt-0.5">
                 Calculate calories & macros for Indian portions instantly. You have{' '}
@@ -343,8 +344,8 @@ export const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* CARD 1: Yellow / Mustard -> Calorie Balance */}
             <div className="bg-[#FDE382] rounded-[24px] p-5 text-[#322A13] flex flex-col justify-between relative overflow-hidden shadow-sm">
-              <div className="absolute top-2 right-4 text-[#F5D86B] font-bold text-5xl select-none pointer-events-none opacity-40">
-                🔥
+              <div className="absolute top-2 right-4 text-[#F5D86B] font-bold select-none pointer-events-none opacity-40">
+                <Flame className="w-16 h-16" />
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#5B502C] mb-2 flex items-center gap-1.5">
@@ -465,7 +466,7 @@ export const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
                 <div className="flex justify-between text-[10px] text-[#7A3648] font-medium">
                   <span>{Math.round((consumedProtein / targetProtein) * 100)}% met</span>
                   <span className="font-bold text-[#1E1E24]">
-                    {consumedProtein >= targetProtein ? 'Goal Reached! 🚀' : 'Muscle Synthesis Zone'}
+                    {consumedProtein >= targetProtein ? 'Goal Reached!' : 'Muscle Synthesis Zone'}
                   </span>
                 </div>
               </div>
@@ -670,11 +671,13 @@ export const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
                     Calculated Breakdown ({parsedItems.length} items):
                   </span>
                   <div className="flex items-center space-x-1.5">
-                    <span className="px-2.5 py-1 rounded-full bg-[#FFD1DD] text-[#69182C] text-xs font-extrabold">
-                      🔥 {totalCalcCalories} kcal
+                    <span className="px-2.5 py-1 rounded-full bg-[#FFD1DD] text-[#69182C] text-xs font-extrabold flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 text-[#69182C]" />
+                      <span>{totalCalcCalories} kcal</span>
                     </span>
-                    <span className="px-2.5 py-1 rounded-full bg-[#E5D7FA] text-[#411F74] text-xs font-extrabold">
-                      🥩 {totalCalcProtein.toFixed(1)}g Protein
+                    <span className="px-2.5 py-1 rounded-full bg-[#E5D7FA] text-[#411F74] text-xs font-extrabold flex items-center gap-1">
+                      <Beef className="w-3.5 h-3.5 text-[#411F74]" />
+                      <span>{totalCalcProtein.toFixed(1)}g Protein</span>
                     </span>
                   </div>
                 </div>
@@ -753,10 +756,10 @@ export const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
                     onChange={(e) => setSelectedMealType(e.target.value as MealType)}
                     className="bg-white text-xs font-bold text-[#1E1E24] rounded-xl px-3 py-1.5 border border-[#F8BFCD] outline-none cursor-pointer"
                   >
-                    <option value="BREAKFAST">🌅 Breakfast</option>
-                    <option value="LUNCH">☀️ Lunch</option>
-                    <option value="DINNER">🌙 Dinner</option>
-                    <option value="SNACK">🍎 Snack</option>
+                    <option value="BREAKFAST">Breakfast</option>
+                    <option value="LUNCH">Lunch</option>
+                    <option value="DINNER">Dinner</option>
+                    <option value="SNACK">Snack</option>
                   </select>
                 </div>
 

@@ -122,10 +122,10 @@ export const ManualFoodModal: React.FC<ManualFoodModalProps> = ({
                 onChange={(e) => setMealType(e.target.value as MealType)}
                 className="w-full bg-[#FAF7F0] border border-[#E2DBD0] rounded-xl px-3 py-2.5 text-xs text-[#1E1E24] font-semibold outline-none focus:border-[#FFAEBF] focus:bg-white transition-all cursor-pointer"
               >
-                <option value="BREAKFAST">🌅 Breakfast</option>
-                <option value="LUNCH">☀️ Lunch</option>
-                <option value="DINNER">🌙 Dinner</option>
-                <option value="SNACK">🍎 Snack</option>
+                <option value="BREAKFAST">Breakfast</option>
+                <option value="LUNCH">Lunch</option>
+                <option value="DINNER">Dinner</option>
+                <option value="SNACK">Snack</option>
               </select>
             </div>
             <div>

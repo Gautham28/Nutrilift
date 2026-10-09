@@ -57,7 +57,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ refreshKey }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Namaste, <span className="text-emerald-400">{user?.fullName || 'Lifter'}</span> 👋
+            Namaste, <span className="text-emerald-400">{user?.fullName || 'Lifter'}</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Track Indian portions effortlessly. Let AI do the nutrient math for you.

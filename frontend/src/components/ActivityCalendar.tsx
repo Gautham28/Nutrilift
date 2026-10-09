@@ -24,6 +24,8 @@ export interface DayActivityData {
   totalFat: number;
   targetCalories: number;
   targetProtein: number;
+  caloriePct: number;
+  proteinPct: number;
   adherencePct: number;
   tier: AdherenceTier;
   isToday: boolean;
@@ -58,7 +60,6 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
   onMonthStatsCalculated,
 }) => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [mode, setMode] = useState<AdherenceMode>('protein');
   const [statsData, setStatsData] = useState<Record<string, DailyStats>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
@@ -177,21 +178,27 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
         hasData = true;
       }
 
-      const currentVal = mode === 'protein' ? prot : cals;
-      const targetVal = mode === 'protein' ? targetProtein : targetCalories;
-      const adherencePct = (targetVal > 0 && hasData) ? Math.round((currentVal / targetVal) * 100) : 0;
+      const calPct = (targetCalories > 0 && hasData) ? Math.round((cals / targetCalories) * 100) : 0;
+      const protPct = (targetProtein > 0 && hasData) ? Math.round((prot / targetProtein) * 100) : 0;
+
+      // Combined adherence
+      const adherencePct = hasData
+        ? (targetCalories > 0 && targetProtein > 0)
+          ? Math.round((calPct + protPct) / 2)
+          : (targetProtein > 0 ? protPct : calPct)
+        : 0;
 
       // Classify strictly by real logged data
       let tier: AdherenceTier = 'low';
       if (hasData) {
         loggedCount++;
-        if (adherencePct >= 100) {
+        if (adherencePct >= 95 || calPct >= 100 || protPct >= 100) {
           tier = 'very_high';
           veryHighCount++;
-        } else if (adherencePct >= 75) {
+        } else if (adherencePct >= 75 || calPct >= 75 || protPct >= 75) {
           tier = 'high';
           highCount++;
-        } else if (adherencePct >= 50) {
+        } else if (adherencePct >= 50 || calPct >= 50 || protPct >= 50) {
           tier = 'moderate';
         } else {
           tier = 'low';
@@ -208,6 +215,8 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
         totalFat: fat,
         targetCalories,
         targetProtein,
+        caloriePct: calPct,
+        proteinPct: protPct,
         adherencePct,
         tier,
         isToday,
@@ -222,7 +231,6 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
     daysInMonth,
     firstDayWeekday,
     todayDateStr,
-    mode,
     targetCalories,
     targetProtein,
     statsData,
@@ -369,99 +377,66 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
   return (
     <div className="bg-white rounded-[32px] p-6 sm:p-7 border border-[#E8E2D2] shadow-sm space-y-6 select-none relative">
       {/* 1. TOP HEADER: "Activity" and "month v" Pill Dropdown */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-2">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1E1E24] tracking-tight">
-              Activity
-            </h2>
-            {isLoading && (
-              <span className="text-[10px] text-[#A09886] font-semibold animate-pulse">
-                Syncing with DB...
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-[#7A7363] mt-0.5 font-medium">
-            Daily goal adherence connected directly to database logs
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center space-x-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1E1E24] tracking-tight">
+            Activity
+          </h2>
+          {isLoading && (
+            <span className="text-[10px] text-[#A09886] font-semibold animate-pulse">
+              Syncing with DB...
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Adherence Mode Pill Toggle */}
-          <div className="bg-[#FAF7F0] p-1 rounded-full border border-[#E8E2D2] hidden sm:flex items-center space-x-1">
-            <button
-              onClick={() => setMode('protein')}
-              className={`px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1 transition-all ${
-                mode === 'protein'
-                  ? 'bg-[#FF358B] text-white shadow-xs'
-                  : 'text-[#7A7363] hover:text-[#1E1E24]'
-              }`}
-            >
-              <Beef className="w-3 h-3" />
-              <span>Protein</span>
-            </button>
-            <button
-              onClick={() => setMode('calories')}
-              className={`px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1 transition-all ${
-                mode === 'calories'
-                  ? 'bg-[#1E1E24] text-white shadow-xs'
-                  : 'text-[#7A7363] hover:text-[#1E1E24]'
-              }`}
-            >
-              <Flame className="w-3 h-3" />
-              <span>Calories</span>
-            </button>
-          </div>
+        {/* Month selector dropdown (Styled like "month v" pill in Image 1) */}
+        <div className="relative shrink-0" ref={dropdownRef}>
+          <button
+            onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
+            className="px-4 py-2 rounded-full bg-[#1E1E24] hover:bg-[#2C2C38] text-white text-xs font-bold flex items-center space-x-1.5 transition-transform active:scale-95 shadow-sm whitespace-nowrap shrink-0"
+          >
+            <span className="whitespace-nowrap">{monthNames[currentMonth].slice(0, 3)} {currentYear}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-white/80 shrink-0" />
+          </button>
 
-          {/* Month selector dropdown (Styled like "month v" pill in Image 1) */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
-              className="px-4 py-2 rounded-full bg-[#1E1E24] hover:bg-[#2C2C36] text-white text-xs font-bold flex items-center space-x-1.5 transition-transform active:scale-95 shadow-sm"
-            >
-              <span>{monthNames[currentMonth].slice(0, 3)} {currentYear}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-white/80" />
-            </button>
-
-            {isMonthDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[#1E1E24] text-white border border-[#343440] rounded-2xl p-2 shadow-2xl z-30 space-y-1">
-                <div className="flex items-center justify-between px-2 py-1 text-xs font-bold border-b border-[#30303C]">
-                  <button
-                    onClick={handlePrevMonth}
-                    className="p-1 hover:bg-[#2E2E3A] rounded-lg transition-colors"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <span>{monthNames[currentMonth]} {currentYear}</span>
-                  <button
-                    onClick={handleNextMonth}
-                    className="p-1 hover:bg-[#2E2E3A] rounded-lg transition-colors"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1 pt-1 text-[11px] font-semibold text-center">
-                  {monthNames.map((m, idx) => (
-                    <button
-                      key={m}
-                      onClick={() => {
-                        setCurrentDate(new Date(currentYear, idx, 1));
-                        setIsMonthDropdownOpen(false);
-                      }}
-                      className={`py-1.5 rounded-lg transition-colors ${
-                        idx === currentMonth
-                          ? 'bg-[#FF358B] text-white font-bold'
-                          : 'hover:bg-[#2C2C38] text-white/80'
-                      }`}
-                    >
-                      {m.slice(0, 3)}
-                    </button>
-                  ))}
-                </div>
+          {isMonthDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-[#1E1E24] text-white border border-[#343440] rounded-2xl p-2 shadow-2xl z-30 space-y-1">
+              <div className="flex items-center justify-between px-2 py-1 text-xs font-bold border-b border-[#30303C]">
+                <button
+                  onClick={handlePrevMonth}
+                  className="p-1 hover:bg-[#2E2E3A] rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="whitespace-nowrap">{monthNames[currentMonth]} {currentYear}</span>
+                <button
+                  onClick={handleNextMonth}
+                  className="p-1 hover:bg-[#2E2E3A] rounded-lg transition-colors"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-            )}
-          </div>
+
+              <div className="grid grid-cols-3 gap-1 pt-1 text-[11px] font-semibold text-center">
+                {monthNames.map((m, idx) => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setCurrentDate(new Date(currentYear, idx, 1));
+                      setIsMonthDropdownOpen(false);
+                    }}
+                    className={`py-1.5 rounded-lg transition-colors ${
+                      idx === currentMonth
+                        ? 'bg-[#FF358B] text-white font-bold'
+                        : 'hover:bg-[#2C2C38] text-white/80'
+                    }`}
+                  >
+                    {m.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -538,7 +513,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
         </div>
       </div>
 
-      {/* 5. SLEEK HOVER POPOVER WITH MINI DONUT CHART & NUMERIC BREAKDOWN */}
+      {/* 5. SLEEK HOVER POPOVER WITH MINI DONUT CHART & ALL DETAILS AT ONCE */}
       {hoveredDay && popoverPos && (
         <div
           className="fixed pointer-events-none z-50 transition-opacity duration-150 animate-in fade-in"
@@ -580,26 +555,26 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
                     case 'very_high':
                       return (
                         <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#FF358B]/20 text-[#FF65A5] border border-[#FF358B]/30 flex items-center gap-1">
-                          <span>🎯 Very High ({hoveredDay.adherencePct}%)</span>
+                          <span>🎯 Very High</span>
                         </span>
                       );
                     case 'high':
                       return (
                         <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#98EE38]/20 text-[#B2F562] border border-[#98EE38]/30">
-                          🟢 High ({hoveredDay.adherencePct}%)
+                          🟢 High
                         </span>
                       );
                     case 'moderate':
                       return (
                         <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#BAE6FD]/20 text-[#BAE6FD] border border-[#BAE6FD]/30">
-                          💧 Moderate ({hoveredDay.adherencePct}%)
+                          💧 Moderate
                         </span>
                       );
                     case 'low':
                     default:
                       return (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2A2A36] text-[#A09886]">
-                          ⚪ Low ({hoveredDay.adherencePct}%)
+                          ⚪ Low
                         </span>
                       );
                   }
@@ -725,32 +700,50 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
               </div>
             </div>
 
-            {/* Target vs Consumed Progress Bar */}
-            <div className="pt-2 border-t border-[#30303D] space-y-1">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-[#A09886] font-semibold">
-                  Target: {mode === 'protein' ? `${hoveredDay.targetProtein}g Protein` : `${hoveredDay.targetCalories} kcal`}
-                </span>
-                <span className="font-extrabold text-white">
-                  {mode === 'protein'
-                    ? `${hoveredDay.totalProtein} / ${hoveredDay.targetProtein}g`
-                    : `${hoveredDay.totalCalories} / ${hoveredDay.targetCalories} kcal`}
-                </span>
+            {/* Target vs Consumed Progress Bars - Reveals both Calories & Protein at once */}
+            <div className="pt-2 border-t border-[#30303D] space-y-2">
+              {/* Calories Target Bar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-[#A09886] font-semibold flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-[#98EE38]" />
+                    <span>Calories</span>
+                  </span>
+                  <span className="font-extrabold text-white">
+                    {hoveredDay.totalCalories} / {hoveredDay.targetCalories} kcal
+                    <span className="text-[#A09886] font-normal ml-1">({hoveredDay.caloriePct}%)</span>
+                  </span>
+                </div>
+                <div className="w-full bg-[#2A2A36] h-1.5 rounded-full overflow-hidden">
+                  <div
+                    style={{
+                      width: `${Math.min(100, hoveredDay.caloriePct)}%`,
+                    }}
+                    className="h-full rounded-full bg-[#98EE38] transition-all duration-300"
+                  />
+                </div>
               </div>
-              <div className="w-full bg-[#2A2A36] h-1.5 rounded-full overflow-hidden">
-                <div
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      mode === 'protein'
-                        ? (hoveredDay.totalProtein / (hoveredDay.targetProtein || 1)) * 100
-                        : (hoveredDay.totalCalories / (hoveredDay.targetCalories || 1)) * 100
-                    )}%`,
-                  }}
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    mode === 'protein' ? 'bg-[#FF358B]' : 'bg-[#98EE38]'
-                  }`}
-                />
+
+              {/* Protein Target Bar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-[#A09886] font-semibold flex items-center gap-1">
+                    <Beef className="w-3 h-3 text-[#FF358B]" />
+                    <span>Protein</span>
+                  </span>
+                  <span className="font-extrabold text-white">
+                    {hoveredDay.totalProtein} / {hoveredDay.targetProtein}g
+                    <span className="text-[#A09886] font-normal ml-1">({hoveredDay.proteinPct}%)</span>
+                  </span>
+                </div>
+                <div className="w-full bg-[#2A2A36] h-1.5 rounded-full overflow-hidden">
+                  <div
+                    style={{
+                      width: `${Math.min(100, hoveredDay.proteinPct)}%`,
+                    }}
+                    className="h-full rounded-full bg-[#FF358B] transition-all duration-300"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -759,3 +752,4 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
     </div>
   );
 };
+

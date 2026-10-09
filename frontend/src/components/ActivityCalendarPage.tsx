@@ -4,13 +4,11 @@ import { FoodEntry, User } from '../types';
 import { entriesApi } from '../services/api';
 import {
   Calendar,
-  Sparkles,
   ArrowLeft,
   Flame,
   Beef,
   Wheat,
   Droplet,
-  CheckCircle2,
   TrendingUp,
   Award,
 } from 'lucide-react';
@@ -94,15 +92,6 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-[#8C8677] uppercase tracking-wider">
-                NutriLift Schedule
-              </span>
-              <span className="text-xs text-[#C5BDB0]">•</span>
-              <span className="text-xs font-bold text-[#FF358B] flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Monthly Adherence
-              </span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#1E1E24] tracking-tight">
               Activity & Nutrition Calendar
             </h1>
@@ -304,11 +293,6 @@ export const ActivityCalendarPage: React.FC<ActivityCalendarPageProps> = ({
                 <span className="text-[#7A7363] font-medium">Total Goal Hit Rate</span>
                 <span className="font-black text-[#1E1E24]">{monthStats.hitRatePct}%</span>
               </div>
-            </div>
-
-            <div className="pt-1 flex items-center space-x-2 text-[11px] text-[#7A7363]">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Consistency is the #1 driver for muscle growth & fat loss.</span>
             </div>
           </div>
         </div>

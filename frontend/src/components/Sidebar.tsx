@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   return (
     <aside
-      className={`bg-[#141418] text-[#A0A0AB] flex flex-col justify-between p-4 sm:p-5 rounded-[32px] select-none shadow-2xl transition-all duration-300 relative border border-[#272730] shrink-0 ${
+      className={`bg-[#141418] text-[#A0A0AB] flex flex-col justify-between p-4 sm:p-5 select-none transition-all duration-300 relative border-r border-[#24242D] h-full shrink-0 ${
         isCollapsed ? 'w-20 items-center' : 'w-56 sm:w-60'
       }`}
     >

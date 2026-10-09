@@ -51,13 +51,13 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#EDE7DA] p-2 sm:p-4 lg:p-6 flex flex-col justify-center font-sans">
+    <div className="h-screen w-screen bg-[#FAF6EE] flex flex-col lg:flex-row overflow-hidden font-sans">
       {/* Mobile Top Navigation Bar */}
-      <div className="lg:hidden flex items-center justify-between px-3 py-2.5 mb-2 bg-[#141418] text-white rounded-2xl border border-[#272730] shadow-sm">
+      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#141418] text-white border-b border-[#24242D] shrink-0">
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5 rounded-xl bg-[#22222A] text-white hover:bg-[#2C2C36] transition-colors"
+            className="p-1.5 rounded-xl bg-[#22222A] text-white hover:bg-[#2C2C38] transition-colors"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -95,40 +95,47 @@ const MainApp: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Container: Left Sidebar + Warm Cream Main App Window */}
-      <div className="w-full max-w-7xl mx-auto flex gap-4 lg:gap-6 min-h-[90vh] items-stretch">
-        {/* 1. Left Sidebar (Image 2 design) */}
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
         <div
-          className={`shrink-0 transition-all duration-300 ${
-            mobileMenuOpen
-              ? 'fixed inset-y-0 left-0 z-50 p-4 bg-[#EDE7DA] flex'
-              : 'hidden lg:flex'
-          }`}
-        >
-          <Sidebar
-            activeTab={activeTab}
-            onSelectTab={(tab) => {
-              setActiveTab(tab);
-              setMobileMenuOpen(false);
-            }}
-            onOpenTargetModal={() => setTargetModalOpen(true)}
-            onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
-            onLogout={() => {
-              if (user) {
-                logout();
-                setIsGuest(false);
-              } else {
-                setAuthModalOpen(true);
-              }
-            }}
-            userName={user?.fullName || (isGuest ? 'Guest Lifter' : 'Lifter')}
-            isCollapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        </div>
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-        {/* 2. Main Content Area */}
-        <main className="flex-1 min-w-0 bg-[#FAF6EE] rounded-[32px] border-2 border-[#1E1E24]/10 shadow-2xl p-4 sm:p-7 lg:p-9 flex flex-col justify-between overflow-y-auto">
+      {/* 1. Left Sidebar (Docked) */}
+      <div
+        className={`shrink-0 transition-all duration-300 z-50 h-full ${
+          mobileMenuOpen
+            ? 'fixed inset-y-0 left-0 flex shadow-2xl'
+            : 'hidden lg:flex'
+        }`}
+      >
+        <Sidebar
+          activeTab={activeTab}
+          onSelectTab={(tab) => {
+            setActiveTab(tab);
+            setMobileMenuOpen(false);
+          }}
+          onOpenTargetModal={() => setTargetModalOpen(true)}
+          onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
+          onLogout={() => {
+            if (user) {
+              logout();
+              setIsGuest(false);
+            } else {
+              setAuthModalOpen(true);
+            }
+          }}
+          userName={user?.fullName || (isGuest ? 'Guest Lifter' : 'Lifter')}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      </div>
+
+      {/* 2. Main Content Area (Docked full-viewport & internally scrolling) */}
+      <main className="flex-1 min-w-0 h-full overflow-y-auto bg-[#FAF6EE] flex flex-col">
+        <div className="w-full max-w-6xl mx-auto p-4 sm:p-7 lg:p-9 flex-1">
           {activeTab === 'dashboard' ? (
             <SimpleDashboard
               key={`${user?.id || 'guest'}-${refreshKey}`}
@@ -152,8 +159,8 @@ const MainApp: React.FC = () => {
               onOpenTargetModal={() => setTargetModalOpen(true)}
             />
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Target Settings Modal */}
       <TargetSettingsModal

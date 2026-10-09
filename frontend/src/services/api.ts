@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { AuthResponse, FoodItem, FoodEntry, TodayEntriesResponse, DailyStats, User, MealType } from '../types';
+import {
+  AuthResponse,
+  FoodItem,
+  FoodEntry,
+  TodayEntriesResponse,
+  DailyStats,
+  User,
+  MealType,
+  AiTargetRequest,
+  AiTargetResponse,
+} from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -61,6 +71,10 @@ export const profileApi = {
   },
   updateTargets: async (targets: { targetCalories: number; targetProteinG: number }): Promise<User> => {
     const res = await apiClient.put<User>('/profile/targets', targets);
+    return res.data;
+  },
+  calculateAiTargets: async (data: AiTargetRequest): Promise<AiTargetResponse> => {
+    const res = await apiClient.post<AiTargetResponse>('/profile/ai-targets', data);
     return res.data;
   },
 };

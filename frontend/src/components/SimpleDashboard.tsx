@@ -16,11 +16,13 @@ import {
   LogOut,
   RefreshCw,
   Calendar as CalendarIcon,
+  Sparkles,
 } from 'lucide-react';
 
 interface SimpleDashboardProps {
   user: any;
   onOpenTargetModal: () => void;
+  onOpenAiAdvisor?: () => void;
   onLogout: () => void;
   onNavigateToCalendar?: () => void;
 }
@@ -28,6 +30,7 @@ interface SimpleDashboardProps {
 export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
   user,
   onOpenTargetModal,
+  onOpenAiAdvisor,
   onLogout,
   onNavigateToCalendar,
 }) => {
@@ -185,6 +188,17 @@ export const SimpleDashboard: React.FC<SimpleDashboardProps> = ({
             <Sliders className="w-3.5 h-3.5 text-[#7A7363]" />
             <span>Target: {targetCalories} kcal</span>
           </button>
+
+          {onOpenAiAdvisor && (
+            <button
+              onClick={onOpenAiAdvisor}
+              title="AI Target Assistant"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#1E1E24] hover:bg-[#2F2F38] text-white text-xs font-bold transition-transform active:scale-95 shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#FFAEBF]" />
+              <span className="hidden sm:inline">AI Advisor</span>
+            </button>
+          )}
 
           <button
             onClick={fetchToday}

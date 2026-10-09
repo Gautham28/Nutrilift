@@ -62,3 +62,25 @@ export interface DailyStats {
   targetCalories: number;
   targetProteinG: number;
 }
+
+export interface AiTargetRequest {
+  weightKg: number;
+  heightCm: number;
+  age: number;
+  gender?: Gender | string;
+  activityLevel?: ActivityLevel | string;
+  fitnessGoal: string;
+}
+
+export interface AiTargetResponse {
+  targetCalories: number;
+  targetProteinG: number;
+  targetCarbsG: number;
+  targetFatG: number;
+  bmr: number;
+  tdee: number;
+  strategy: string;
+  explanation: string;
+  actionableTips: string[];
+}
+

@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Sliders, Check, Flame, Dumbbell, AlertCircle } from 'lucide-react';
+import { X, Sliders, Check, Flame, Dumbbell, AlertCircle, Sparkles } from 'lucide-react';
 
 interface TargetSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
+  onOpenAiAdvisor?: () => void;
 }
 
-export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen, onClose, onSaved }) => {
+export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({
+  isOpen,
+  onClose,
+  onSaved,
+  onOpenAiAdvisor,
+}) => {
   const { user, updateUserTargets } = useAuth();
 
   const [calories, setCalories] = useState<number>(user?.targetCalories || 2000);
@@ -51,7 +57,7 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center space-x-3 mb-6">
+        <div className="flex items-center space-x-3 mb-5">
           <div className="p-2.5 rounded-2xl bg-[#FFAEBF] text-[#1E1E24] shadow-sm">
             <Sliders className="w-5 h-5" />
           </div>
@@ -60,6 +66,31 @@ export const TargetSettingsModal: React.FC<TargetSettingsModalProps> = ({ isOpen
             <p className="text-xs text-[#7A7363]">Customize your daily nutrition targets</p>
           </div>
         </div>
+
+        {/* AI Advisor Quick Launcher */}
+        {onOpenAiAdvisor && (
+          <div className="mb-5 p-3.5 rounded-2xl bg-gradient-to-r from-[#141418] to-[#252530] text-white flex items-center justify-between shadow-sm border border-[#343442]">
+            <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF358B] to-[#FFAEBF] flex items-center justify-center text-[#141418] shrink-0">
+                <Sparkles className="w-4 h-4 fill-[#141418]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-white truncate">Not sure what to target?</p>
+                <p className="text-[10px] text-[#A0A0AB] truncate">Let AI calculate your calories & protein</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenAiAdvisor();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-[#FFAEBF] hover:bg-[#FFC4D2] text-[#141418] text-xs font-black transition-transform active:scale-95 shrink-0 shadow-xs"
+            >
+              Ask AI ✨
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">

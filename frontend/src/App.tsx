@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SimpleDashboard } from './components/SimpleDashboard';
 import { TargetSettingsModal } from './components/TargetSettingsModal';
+import { AiTargetAdvisorModal } from './components/AiTargetAdvisorModal';
 import { AuthScreen } from './components/AuthScreen';
 import { Sidebar } from './components/Sidebar';
 import { ActivityCalendarPage } from './components/ActivityCalendarPage';
@@ -14,6 +15,7 @@ const MainApp: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [targetModalOpen, setTargetModalOpen] = useState(false);
+  const [aiAdvisorOpen, setAiAdvisorOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -110,6 +112,7 @@ const MainApp: React.FC = () => {
               setMobileMenuOpen(false);
             }}
             onOpenTargetModal={() => setTargetModalOpen(true)}
+            onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
             onLogout={() => {
               if (user) {
                 logout();
@@ -131,6 +134,7 @@ const MainApp: React.FC = () => {
               key={`${user?.id || 'guest'}-${refreshKey}`}
               user={user}
               onOpenTargetModal={() => setTargetModalOpen(true)}
+              onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
               onNavigateToCalendar={() => setActiveTab('calendar')}
               onLogout={() => {
                 if (user) {
@@ -156,6 +160,16 @@ const MainApp: React.FC = () => {
         isOpen={targetModalOpen}
         onClose={() => setTargetModalOpen(false)}
         onSaved={handleTargetSaved}
+        onOpenAiAdvisor={() => setAiAdvisorOpen(true)}
+      />
+
+      {/* AI Target Advisor Modal */}
+      <AiTargetAdvisorModal
+        isOpen={aiAdvisorOpen}
+        onClose={() => setAiAdvisorOpen(false)}
+        onTargetsApplied={(_cals, _prot) => {
+          setRefreshKey((prev) => prev + 1);
+        }}
       />
 
       {/* Auth Modal when in guest mode */}

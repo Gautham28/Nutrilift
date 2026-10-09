@@ -3,6 +3,8 @@ package com.nutrilift.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nutrilift.dto.AiTargetRequest;
+import com.nutrilift.dto.AiTargetResponse;
 import com.nutrilift.dto.FoodItemDto;
 import com.nutrilift.exception.BadRequestException;
 import org.slf4j.Logger;
@@ -247,4 +249,189 @@ public class AiParsingService {
         map.put("khichdi", new NutritionProfile("Moong Dal Khichdi", "bowl", 200, 7.5, 36.0, 3.0));
         return map;
     }
+
+    private static final String TARGET_ADVISOR_SYSTEM_PROMPT = """
+            You are an elite sports scientist and registered dietitian specializing in physique transformation, strength training, and Indian diet optimization.
+            Given a user's biometrics and personal fitness goal, calculate their optimal daily nutritional targets.
+            
+            Determine:
+            1. Target daily Calories (applying a calibrated deficit for fat loss, surplus for lean bulking, or maintenance for recomposition).
+            2. Target daily Protein (in grams, using 1.6 - 2.2g per kg bodyweight based on their goal).
+            3. Target daily Carbs (in grams).
+            4. Target daily Fat (in grams).
+            5. Estimated BMR (Basal Metabolic Rate).
+            6. Estimated TDEE (Total Daily Energy Expenditure).
+            7. Strategy title (short summary, e.g. 'Calorie Deficit (-350 kcal) • Recomposition Focus').
+            8. Explanation (2-3 concise sentences explaining why these specific numbers were chosen for their goal).
+            9. Actionable Tips (an array of 3 practical, high-impact nutrition or training tips).
+
+            Return ONLY valid JSON matching this exact structure:
+            {
+              "targetCalories": 2100,
+              "targetProteinG": 140,
+              "targetCarbsG": 230,
+              "targetFatG": 65,
+              "bmr": 1700,
+              "tdee": 2400,
+              "strategy": "Calorie Deficit (-300 kcal) for Fat Loss",
+              "explanation": "With a 300 kcal deficit and 140g protein...",
+              "actionableTips": [
+                "Prioritize 30g+ protein in breakfast to curb cravings",
+                "Keep heavy carbs around workouts for high training performance",
+                "Drink at least 3 to 3.5 liters of water daily"
+              ]
+            }
+            """;
+
+    public AiTargetResponse calculateAiTargets(AiTargetRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Target calculation request cannot be empty");
+        }
+
+        if (isGeminiApiKeyConfigured()) {
+            try {
+                return callGeminiTargetAdvisor(request);
+            } catch (Exception ex) {
+                log.warn("Gemini target advisor call failed ({}), falling back to intelligent nutrition calculation...", ex.getMessage());
+            }
+        }
+
+        return fallbackTargetAdvisor(request);
+    }
+
+    private AiTargetResponse callGeminiTargetAdvisor(AiTargetRequest request) throws Exception {
+        String prompt = String.format("""
+                %s
+
+                User Biometrics & Goals:
+                - Weight: %s kg
+                - Height: %d cm
+                - Age: %d
+                - Gender: %s
+                - Activity Level: %s
+                - User Fitness Goal & Routine: "%s"
+                """,
+                TARGET_ADVISOR_SYSTEM_PROMPT,
+                request.getWeightKg() != null ? request.getWeightKg().toString() : "70",
+                request.getHeightCm() != null ? request.getHeightCm() : 175,
+                request.getAge() != null ? request.getAge() : 25,
+                request.getGender() != null ? request.getGender() : "MALE",
+                request.getActivityLevel() != null ? request.getActivityLevel() : "MODERATE",
+                request.getFitnessGoal()
+        );
+
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
+                geminiModel, geminiApiKey);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> textPart = Map.of("text", prompt);
+        Map<String, Object> contentObj = Map.of("parts", List.of(textPart));
+
+        Map<String, Object> generationConfig = new HashMap<>();
+        generationConfig.put("temperature", 0.3);
+        generationConfig.put("response_mime_type", "application/json");
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(contentObj));
+        requestBody.put("generationConfig", generationConfig);
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new RuntimeException("Gemini returned non-200: " + response.getStatusCode());
+        }
+
+        JsonNode root = objectMapper.readTree(response.getBody());
+        JsonNode candidates = root.path("candidates");
+        if (candidates.isEmpty()) {
+            throw new BadRequestException("AI could not analyze goals. Please try again.");
+        }
+
+        String contentText = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+        String cleanedJson = stripMarkdown(contentText);
+
+        return objectMapper.readValue(cleanedJson, AiTargetResponse.class);
+    }
+
+    private AiTargetResponse fallbackTargetAdvisor(AiTargetRequest request) {
+        double weight = request.getWeightKg() != null ? request.getWeightKg().doubleValue() : 70.0;
+        int height = request.getHeightCm() != null ? request.getHeightCm() : 175;
+        int age = request.getAge() != null ? request.getAge() : 25;
+        String gender = request.getGender() != null ? request.getGender().toUpperCase() : "MALE";
+        String activity = request.getActivityLevel() != null ? request.getActivityLevel().toUpperCase() : "MODERATE";
+        String goal = request.getFitnessGoal() != null ? request.getFitnessGoal().toLowerCase() : "";
+
+        // BMR (Mifflin-St Jeor)
+        double bmr = ("FEMALE".equals(gender))
+                ? (10.0 * weight) + (6.25 * height) - (5.0 * age) - 161.0
+                : (10.0 * weight) + (6.25 * height) - (5.0 * age) + 5.0;
+
+        // Activity multiplier
+        double multiplier = switch (activity) {
+            case "SEDENTARY" -> 1.2;
+            case "LIGHT", "LIGHTLY_ACTIVE" -> 1.375;
+            case "ACTIVE", "VERY_ACTIVE" -> 1.725;
+            default -> 1.55; // MODERATE
+        };
+
+        double tdee = bmr * multiplier;
+
+        int targetCalories;
+        int targetProteinG;
+        String strategy;
+        String explanation;
+        List<String> tips = new ArrayList<>();
+
+        if (goal.contains("lose") || goal.contains("cut") || goal.contains("fat") || goal.contains("drop") || goal.contains("belly") || goal.contains("weight loss")) {
+            int deficit = 400;
+            targetCalories = Math.max(1300, (int) Math.round(tdee - deficit));
+            targetProteinG = (int) Math.round(weight * 2.0); // 2.0g/kg during deficit
+            strategy = "Caloric Deficit (-400 kcal) • Lean Fat Loss";
+            explanation = String.format("A targeted deficit of 400 kcal below your maintenance (%d kcal) promotes steady fat loss while %dg protein protects lean muscle tissue.", (int) Math.round(tdee), targetProteinG);
+            tips.add("Distribute your protein evenly across 3-4 meals to preserve muscle mass.");
+            tips.add("Prioritize fiber-rich Indian legumes and vegetables to stay full longer.");
+            tips.add("Keep high-GI carbs close to your training sessions for maximum workout energy.");
+        } else if (goal.contains("bulk") || goal.contains("gain") || goal.contains("muscle") || goal.contains("mass") || goal.contains("hypertrophy")) {
+            int surplus = 300;
+            targetCalories = (int) Math.round(tdee + surplus);
+            targetProteinG = (int) Math.round(weight * 1.8);
+            strategy = "Clean Caloric Surplus (+300 kcal) • Hypertrophy Bulking";
+            explanation = String.format("A controlled surplus of +300 kcal above maintenance (%d kcal) provides the necessary anabolic energy for muscle hypertrophy without unnecessary fat storage.", (int) Math.round(tdee));
+            tips.add("Consume 30-40g protein and complex carbs within 90 minutes post-workout.");
+            tips.add("Include calorie-dense healthy fats like almonds, walnuts, and peanut butter.");
+            tips.add("Track progressive overload in the gym to ensure calories convert into muscle.");
+        } else {
+            // Recomposition
+            targetCalories = (int) Math.round(tdee - 150);
+            targetProteinG = (int) Math.round(weight * 1.9);
+            strategy = "Body Recomposition • High Protein Tone";
+            explanation = String.format("A gentle 150 kcal deficit paired with optimal %dg protein allows you to shed body fat while building lean muscle definition simultaneously.", targetProteinG);
+            tips.add("Focus on compound lifts (squats, bench, deadlifts) to stimulate muscle recruitment.");
+            tips.add("Drink 3 to 3.5 liters of water every day to support metabolic recovery.");
+            tips.add("Aim for 7-8 hours of quality sleep to optimize anabolic hormone levels.");
+        }
+
+        // Remaining macros
+        int proteinCals = targetProteinG * 4;
+        int fatCals = (int) Math.round(targetCalories * 0.25);
+        int targetFatG = Math.max(40, fatCals / 9);
+        int carbCals = Math.max(0, targetCalories - proteinCals - (targetFatG * 9));
+        int targetCarbsG = Math.max(80, carbCals / 4);
+
+        return new AiTargetResponse(
+                targetCalories,
+                targetProteinG,
+                targetCarbsG,
+                targetFatG,
+                (int) Math.round(bmr),
+                (int) Math.round(tdee),
+                strategy,
+                explanation,
+                tips
+        );
+    }
 }
+

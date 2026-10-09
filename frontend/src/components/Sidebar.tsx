@@ -8,12 +8,14 @@ import {
   LogOut,
   ChevronLeft,
   Flame,
+  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'calendar';
   onSelectTab: (tab: 'dashboard' | 'calendar') => void;
   onOpenTargetModal: () => void;
+  onOpenAiAdvisor?: () => void;
   onLogout: () => void;
   userName?: string;
   isCollapsed?: boolean;
@@ -24,6 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   onOpenTargetModal,
+  onOpenAiAdvisor,
   onLogout,
   userName = 'Gautham',
   isCollapsed = false,
@@ -143,6 +146,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <p className="text-[10px] font-bold text-[#52525B] uppercase tracking-wider px-3 mb-2">
               Tools
             </p>
+          )}
+
+          {/* AI Target Assistant */}
+          {onOpenAiAdvisor && (
+            <button
+              onClick={onOpenAiAdvisor}
+              title="AI Target Advisor"
+              className={`w-full flex items-center ${
+                isCollapsed ? 'justify-center px-0 h-11 w-11 mx-auto' : 'space-x-3 px-3.5 py-2.5'
+              } rounded-2xl text-xs font-bold transition-all text-[#FFAEBF] hover:text-white hover:bg-[#1C1C22] group border border-[#FF358B]/20 bg-[#FF358B]/5`}
+            >
+              <Sparkles className="w-4 h-4 shrink-0 text-[#FF358B] group-hover:scale-110 transition-transform" />
+              {!isCollapsed && (
+                <span className="truncate flex items-center justify-between flex-1">
+                  <span>AI Advisor</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#FF358B]/20 text-[#FFAEBF] font-extrabold">
+                    AI
+                  </span>
+                </span>
+              )}
+            </button>
           )}
 
           <button
